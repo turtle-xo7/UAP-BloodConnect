@@ -13,7 +13,6 @@ class BloodRequest(models.Model):
        ('critical', 'Critical'),
    ]
 
-
    STATUS_CHOICES = [
        ('open', 'Open'),
        ('in_progress', 'In Progress'),
@@ -21,16 +20,20 @@ class BloodRequest(models.Model):
        ('closed', 'Closed'),
    ]
 
-
-   LOCATION_CHOICES = [
-       ('campus', 'UAP Campus'),
-       ('uttara', 'Uttara'),
-       ('gulshan', 'Gulshan'),
-       ('banani', 'Banani'),
-       ('dhanmondi', 'Dhanmondi'),
-       ('mirpur', 'Mirpur'),
+   MODERATION_CHOICES = [
+       ('pending',  'Pending Review'),
+       ('approved', 'Approved'),
+       ('rejected', 'Rejected'),
    ]
 
+   LOCATION_CHOICES = [
+       ('campus',    'UAP Campus'),
+       ('uttara',    'Uttara'),
+       ('gulshan',   'Gulshan'),
+       ('banani',    'Banani'),
+       ('dhanmondi', 'Dhanmondi'),
+       ('mirpur',    'Mirpur'),
+   ]
 
    requester = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='blood_requests')
    blood_group = models.ForeignKey(BloodGroup, on_delete=models.CASCADE)
@@ -44,6 +47,16 @@ class BloodRequest(models.Model):
    patient_age = models.IntegerField(null=True, blank=True)
    description = models.TextField(blank=True)
    supporting_document = models.FileField(upload_to='request_documents/', blank=True, null=True)
+   # Moderation fields
+   moderation_status = models.CharField(
+       max_length=10, choices=MODERATION_CHOICES, default='pending'
+   )
+   moderated_by = models.ForeignKey(
+       CustomUser, on_delete=models.SET_NULL,
+       null=True, blank=True, related_name='moderated_requests'
+   )
+   moderated_at = models.DateTimeField(null=True, blank=True)
+   moderation_note = models.TextField(blank=True)
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
 
@@ -109,6 +122,30 @@ class Notification(models.Model):
        return f"Notification for {self.user.username} - {self.notification_type}"
 
 
+
+
+class EmergencyBroadcast(models.Model):
+   """Emergency message sent to all eligible donors. Requires advisor co-approval."""
+   STATUS_CHOICES = [
+       ('pending',  'Pending Advisor Approval'),
+       ('approved', 'Approved & Sent'),
+       ('rejected', 'Rejected'),
+   ]
+
+   title = models.CharField(max_length=200)
+   message = models.TextField()
+   target_blood_groups = models.CharField(max_length=100, blank=True, help_text="Comma-separated, blank = all")
+   created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='broadcasts_created')
+   approved_by = models.ForeignKey(
+       CustomUser, on_delete=models.SET_NULL,
+       null=True, blank=True, related_name='broadcasts_approved'
+   )
+   status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+   sent_at = models.DateTimeField(null=True, blank=True)
+   created_at = models.DateTimeField(auto_now_add=True)
+
+   def __str__(self):
+       return f"Broadcast: {self.title} [{self.status}]"
 
 
 # ✅ Move Feedback outside (top-level class)

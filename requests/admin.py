@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BloodRequest, RequestResponse, Notification, Feedback
+from .models import BloodRequest, RequestResponse, Notification, Feedback, EmergencyBroadcast
 
 
 @admin.register(BloodRequest)
@@ -32,3 +32,11 @@ class FeedbackAdmin(admin.ModelAdmin):
    list_filter = ['rating', 'is_resolved', 'created_at']
    search_fields = ['name', 'email', 'message']
    readonly_fields = ['created_at']
+
+
+@admin.register(EmergencyBroadcast)
+class EmergencyBroadcastAdmin(admin.ModelAdmin):
+   list_display = ['title', 'status', 'created_by', 'approved_by', 'created_at', 'sent_at']
+   list_filter = ['status', 'created_at']
+   search_fields = ['title', 'created_by__username']
+   readonly_fields = ['created_at', 'sent_at']
