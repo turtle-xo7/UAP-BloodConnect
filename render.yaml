@@ -10,7 +10,7 @@ services:
     runtime: python
     plan: free
     region: oregon
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn bloodconnect.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
     envVars:
       - key: PYTHON_VERSION
