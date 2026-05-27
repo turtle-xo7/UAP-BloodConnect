@@ -1,34 +1,451 @@
 {% extends 'base.html' %}
 
-{% block title %}Login - UAP-BloodConnect{% endblock %}
+{% block title %}Sign In — UAP BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Override base padding so we own the full viewport */
+  .page-wrapper { padding-top: 0 !important; }
+
+  .auth-screen {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 860px) {
+    .auth-screen { grid-template-columns: 1fr; }
+    .auth-left   { display: none; }
+  }
+
+  /* ── Left panel ── */
+  .auth-left {
+    background: linear-gradient(160deg, #0F172A 0%, #1a0000 60%, #0F172A 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 40% 50%, rgba(198,40,40,0.25) 0%, transparent 65%);
+  }
+  .auth-left-content { position: relative; z-index: 1; text-align: center; max-width: 380px; }
+
+  .blood-icon-anim {
+    width: 100px; height: 120px;
+    margin: 0 auto 2rem;
+    position: relative;
+  }
+  .blood-drop-shape {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, var(--crimson) 0%, #8B0000 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    transform: rotate(-45deg);
+    box-shadow: 0 0 60px rgba(198,40,40,0.5), inset 0 -10px 30px rgba(0,0,0,0.3);
+    animation: dropFloat 4s ease-in-out infinite, dropPulse 2s ease-in-out infinite;
+  }
+  @keyframes dropFloat {
+    0%,100% { transform: rotate(-45deg) translateY(0); }
+    50%      { transform: rotate(-45deg) translateY(-12px); }
+  }
+  @keyframes dropPulse {
+    0%,100% { box-shadow: 0 0 60px rgba(198,40,40,0.5); }
+    50%      { box-shadow: 0 0 90px rgba(198,40,40,0.7); }
+  }
+
+  .auth-left h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+  }
+  .auth-left p {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .auth-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+  }
+  .auth-stat {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 0.9rem 0.5rem;
+    text-align: center;
+  }
+  .auth-stat .num { font-size: 1.4rem; font-weight: 800; color: var(--crimson-light); line-height: 1; }
+  .auth-stat .lbl { font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-top: 0.25rem; }
+
+  /* ── Right panel ── */
+  .auth-right {
+    background: #0F172A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+    min-height: 100vh;
+  }
+  .auth-form-wrap {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .auth-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+  .auth-logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(198,40,40,0.4);
+  }
+  .auth-logo-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  .auth-logo-text span { color: var(--crimson-light); }
+
+  .auth-heading { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+  .auth-subtext { color: rgba(255,255,255,0.45); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  /* ── Form fields ── */
+  .field-wrap {
+    margin-bottom: 1.25rem;
+    position: relative;
+  }
+  .field-wrap label {
+    display: block;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+    letter-spacing: 0.03em;
+  }
+  .input-icon-wrap {
+    position: relative;
+  }
+  .input-icon-wrap .field-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.3);
+    font-size: 0.9rem;
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+  .auth-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    color: #fff;
+    padding: 0.85rem 1rem 0.85rem 2.85rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-input::placeholder { color: rgba(255,255,255,0.2); }
+  .auth-input:focus {
+    border-color: var(--crimson);
+    background: rgba(198,40,40,0.07);
+    box-shadow: 0 0 0 3px rgba(198,40,40,0.15);
+  }
+  .auth-input:focus ~ .field-icon,
+  .input-icon-wrap:focus-within .field-icon { color: var(--crimson-light); }
+
+  .toggle-pw {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  .toggle-pw:hover { color: rgba(255,255,255,0.7); }
+
+  /* Error state */
+  .auth-input.has-error { border-color: #ef4444; background: rgba(239,68,68,0.06); }
+  .field-error {
+    color: #f87171;
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  /* Remember + forgot row */
+  .form-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    margin-top: -0.25rem;
+  }
+  .remember-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.83rem;
+    color: rgba(255,255,255,0.5);
+  }
+  .remember-label input[type=checkbox] { accent-color: var(--crimson); width: 15px; height: 15px; cursor: pointer; }
+  .forgot-link { color: rgba(255,255,255,0.4); font-size: 0.83rem; text-decoration: none; transition: color 0.2s; }
+  .forgot-link:hover { color: var(--crimson-light); }
+
+  /* Submit button */
+  .auth-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.95rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 24px rgba(198,40,40,0.35);
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(198,40,40,0.45); }
+  .auth-btn:hover::after { opacity: 1; }
+  .auth-btn:active { transform: translateY(0); }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+  .auth-divider span { color: rgba(255,255,255,0.25); font-size: 0.78rem; white-space: nowrap; }
+
+  .auth-switch {
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.9rem;
+  }
+  .auth-switch a {
+    color: var(--crimson-light);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .auth-switch a:hover { color: #fff; }
+
+  /* Non-field error box */
+  .auth-error-box {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #f87171;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+</style>
+{% endblock %}
+
+{% block emergency_bar %}{% endblock %}
 
 {% block content %}
-<div style="max-width: 400px; margin: 0 auto;">
-    <div class="card">
-        <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">Welcome Back</h2>
-        <p style="text-align: center; margin-bottom: 2rem; color: var(--gray-600);">Sign in to your account</p>
-        
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label class="form-label">Username or UAP ID</label>
-                <input type="text" name="username" class="form-control" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-            
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-                Sign In
-            </button>
-        </form>
-        
-        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
-            <p>Don't have an account? <a href="{% url 'register' %}" style="color: var(--primary-red); font-weight: 600;">Register Now</a></p>
+<div class="auth-screen">
+
+  <!-- Left: branding panel -->
+  <div class="auth-left">
+    <div class="auth-left-content">
+      <div class="blood-icon-anim">
+        <div class="blood-drop-shape"></div>
+      </div>
+      <h2>Every Drop<br>Counts</h2>
+      <p>Sign in to connect with donors, track your impact, and help save lives across UAP campus.</p>
+      <div class="auth-stats">
+        <div class="auth-stat">
+          <div class="num" id="stat-donors">0</div>
+          <div class="lbl">Donors</div>
         </div>
+        <div class="auth-stat">
+          <div class="num" id="stat-saved">0</div>
+          <div class="lbl">Lives Saved</div>
+        </div>
+        <div class="auth-stat">
+          <div class="num" id="stat-drives">0</div>
+          <div class="lbl">Drives</div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Right: login form -->
+  <div class="auth-right">
+    <div class="auth-form-wrap">
+
+      <div class="auth-logo-row">
+        <div class="auth-logo-icon"><i class="fas fa-tint"></i></div>
+        <div class="auth-logo-text">UAP<span>Blood</span>Connect</div>
+      </div>
+
+      <h1 class="auth-heading">Welcome back</h1>
+      <p class="auth-subtext">Sign in to your account to continue.</p>
+
+      {% if form.non_field_errors %}
+      <div class="auth-error-box">
+        <i class="fas fa-exclamation-circle" style="flex-shrink:0; margin-top:0.1rem;"></i>
+        <span>{{ form.non_field_errors|striptags }}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" id="loginForm" novalidate>
+        {% csrf_token %}
+
+        <div class="field-wrap">
+          <label for="id_username">Username</label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-user field-icon"></i>
+            <input type="text" name="username" id="id_username"
+                   class="auth-input {% if form.username.errors %}has-error{% endif %}"
+                   placeholder="Enter your username"
+                   value="{{ form.username.value|default:'' }}"
+                   autocomplete="username"
+                   autofocus required>
+          </div>
+          {% if form.username.errors %}
+          <div class="field-error"><i class="fas fa-times-circle"></i> {{ form.username.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="field-wrap">
+          <label for="id_password">Password</label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-lock field-icon"></i>
+            <input type="password" name="password" id="id_password"
+                   class="auth-input {% if form.password.errors %}has-error{% endif %}"
+                   placeholder="Enter your password"
+                   autocomplete="current-password"
+                   required>
+            <button type="button" class="toggle-pw" onclick="togglePassword('id_password', this)" tabindex="-1" aria-label="Show password">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}
+          <div class="field-error"><i class="fas fa-times-circle"></i> {{ form.password.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-meta">
+          <label class="remember-label">
+            <input type="checkbox" name="remember_me">
+            Remember me
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="auth-btn">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>New to BloodConnect?</span></div>
+
+      <div class="auth-switch">
+        Don't have an account? <a href="{% url 'register' %}">Create one — it's free</a>
+      </div>
+
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon  = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+// Animate stats counters
+function animateCount(el, target, suffix) {
+  let cur = 0;
+  const step = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur + (suffix || '');
+    if (cur >= target) clearInterval(timer);
+  }, 35);
+}
+window.addEventListener('DOMContentLoaded', () => {
+  animateCount(document.getElementById('stat-donors'), 120, '+');
+  animateCount(document.getElementById('stat-saved'),  360, '+');
+  animateCount(document.getElementById('stat-drives'),  18, '+');
+});
+
+// Shake form on error
+{% if form.non_field_errors %}
+document.getElementById('loginForm').style.animation = 'shake 0.4s ease';
+{% endif %}
+</script>
+<style>
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60%  { transform: translateX(-8px); }
+  40%,80%  { transform: translateX(8px); }
+}
+</style>
 {% endblock %}
