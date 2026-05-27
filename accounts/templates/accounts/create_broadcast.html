@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Emergency Broadcast — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .broadcast-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #1a0010 100%);
+    padding: 5rem 0 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .broadcast-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 40%, rgba(198,40,40,0.18) 0%, transparent 70%);
+  }
+  .form-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 720px;
+    margin: 2rem auto;
+    backdrop-filter: blur(12px);
+  }
+  .form-card h2 {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .helper-banner {
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.5rem;
+    color: #fde68a;
+    font-size: 0.85rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+  .helper-banner i { color: #fbbf24; margin-top: 0.15rem; }
+  .field-errors { color: #fca5a5; font-size: 0.8rem; margin-top: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="broadcast-hero">
+  <div class="container" style="position:relative; z-index:1;">
+    <div style="display:flex; align-items:center; gap:1rem;">
+      <div style="width:48px;height:48px;background:rgba(198,40,40,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-broadcast-tower" style="color:var(--crimson);font-size:1.3rem;"></i>
+      </div>
+      <div>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0;">Club President</p>
+        <h1 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0;">Send Emergency Broadcast</h1>
+      </div>
+    </div>
+    <p style="color:rgba(255,255,255,0.5); margin-top:0.5rem;">
+      Draft a message that reaches every eligible donor — requires Faculty Advisor approval before sending.
+    </p>
+  </div>
+</div>
+
+<section style="padding:2rem 0 4rem;">
+  <div class="container">
+    <div class="form-card">
+      <h2>
+        <i class="fas fa-bullhorn" style="color:var(--crimson);"></i>
+        Compose Broadcast
+      </h2>
+      <p style="color:rgba(255,255,255,0.5); font-size:0.9rem; margin-bottom:1.5rem;">
+        Use this for genuine emergencies only — your Faculty Advisor must co-approve before any donor receives it.
+      </p>
+
+      <div class="helper-banner">
+        <i class="fas fa-info-circle"></i>
+        <span>
+          For <strong>target blood groups</strong>, enter a comma-separated list (e.g. <code>O-, AB-</code>)
+          or leave blank to reach every registered donor.
+        </span>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">Broadcast Title</label>
+          {{ form.title }}
+          {% if form.title.errors %}<div class="field-errors">{{ form.title.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.message.id_for_label }}">Message</label>
+          {{ form.message }}
+          {% if form.message.errors %}<div class="field-errors">{{ form.message.errors|join:", " }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.target_blood_groups.id_for_label }}">Target Blood Groups</label>
+          {{ form.target_blood_groups }}
+          {% if form.target_blood_groups.errors %}<div class="field-errors">{{ form.target_blood_groups.errors|join:", " }}</div>{% endif %}
+          <small style="color:rgba(255,255,255,0.4); font-size:0.78rem;">Leave blank to broadcast to all donors.</small>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit for Approval
+          </button>
+          <a href="{% url 'president_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

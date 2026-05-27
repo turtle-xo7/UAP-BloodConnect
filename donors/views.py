@@ -146,17 +146,21 @@ def add_donation_history(request):
             donation = form.save(commit=False)
             donation.donor = donor
             donation.status = 'completed'
+            # verification_status defaults to 'pending' — total_donations and
+            # achievements are awarded by the verifier, not here.
             donation.save()
 
-            donor.total_donations += 1
+            # Lock the 90-day window immediately so the form can't be spammed
+            # with unverified records.
             donor.last_donation_date = donation.donation_date
             donor.can_donate_again = False
-            donor.save()
+            donor.save(update_fields=['last_donation_date', 'can_donate_again'])
 
-            # Award achievements
-            _award_achievements(donor)
-
-            messages.success(request, 'Donation recorded! Thank you for saving lives.')
+            messages.success(
+                request,
+                'Donation submitted! It will appear on the leaderboard once a faculty advisor '
+                'or medical verifier confirms it.'
+            )
             return redirect('donor_dashboard')
     else:
         form = DonationHistoryForm()

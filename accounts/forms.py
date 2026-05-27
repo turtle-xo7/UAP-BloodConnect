@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, UserProfile
+from requests.models import EmergencyBroadcast
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -29,6 +30,28 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Choose a username'})
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Enter password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm password'})
+
+
+class EmergencyBroadcastForm(forms.ModelForm):
+    class Meta:
+        model = EmergencyBroadcast
+        fields = ('title', 'message', 'target_blood_groups')
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. URGENT: O- needed for emergency surgery',
+                'maxlength': 200,
+            }),
+            'message': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Patient, location, contact, time-sensitivity…',
+            }),
+            'target_blood_groups': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. O-, AB-   (leave blank for all donors)',
+            }),
+        }
 
 
 class UserProfileForm(forms.ModelForm):

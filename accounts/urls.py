@@ -14,5 +14,6 @@ urlpatterns = [
     path('advisor/drive/<int:drive_id>/approve/', views.approve_drive, name='approve_drive'),
     path('advisor/broadcast/<int:broadcast_id>/approve/', views.approve_broadcast, name='approve_broadcast'),
     path('president/', views.president_dashboard, name='president_dashboard'),
+    path('president/broadcast/new/', views.create_broadcast, name='create_broadcast'),
     path('manage-roles/', views.manage_roles, name='manage_roles'),
 ]

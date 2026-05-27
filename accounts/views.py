@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from .forms import CustomUserCreationForm, UserProfileForm
+from .forms import CustomUserCreationForm, UserProfileForm, EmergencyBroadcastForm
 from .models import UserProfile, CustomUser
 from .decorators import advisor_required, president_required, moderator_required, super_admin_required
 
@@ -118,6 +118,16 @@ def verify_donation(request, donation_id):
             donation.verified_by = request.user
             donation.verified_at = timezone.now()
             donation.save(update_fields=['verification_status', 'verified_by', 'verified_at'])
+
+            # Now that it's verified, recount and award achievements.
+            donor = donation.donor
+            donor.total_donations = donor.donations.filter(
+                verification_status='verified'
+            ).count()
+            donor.save(update_fields=['total_donations'])
+            from donors.views import _award_achievements
+            _award_achievements(donor)
+
             messages.success(request, f'Donation by {donation.donor.user.username} verified.')
         elif action == 'reject':
             reason = request.POST.get('rejection_reason', '').strip()
@@ -125,11 +135,6 @@ def verify_donation(request, donation_id):
             donation.verified_by = request.user
             donation.verified_at = timezone.now()
             donation.rejection_reason = reason
-            # Rollback the donation count
-            donor = donation.donor
-            if donor.total_donations > 0:
-                donor.total_donations -= 1
-                donor.save(update_fields=['total_donations'])
             donation.save()
             messages.warning(request, f'Donation record rejected. Donor notified.')
 
@@ -239,6 +244,28 @@ def president_dashboard(request):
         ).count(),
     }
     return render(request, 'accounts/president_dashboard.html', context)
+
+
+@login_required
+@president_required
+def create_broadcast(request):
+    """Club president drafts an emergency broadcast; advisor must approve before send."""
+    from requests.models import EmergencyBroadcast
+    if request.method == 'POST':
+        form = EmergencyBroadcastForm(request.POST)
+        if form.is_valid():
+            broadcast = form.save(commit=False)
+            broadcast.created_by = request.user
+            broadcast.status = 'pending'
+            broadcast.save()
+            messages.success(
+                request,
+                f'Broadcast "{broadcast.title}" submitted for faculty advisor approval.'
+            )
+            return redirect('president_dashboard')
+    else:
+        form = EmergencyBroadcastForm()
+    return render(request, 'accounts/create_broadcast.html', {'form': form})
 
 
 # ─── Role Management (Super Admin) ───

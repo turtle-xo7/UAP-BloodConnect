@@ -41,9 +41,11 @@ def create_request(request):
             blood_request.requester = request.user
             blood_request.save()
 
-            _notify_matching_donors(blood_request)
-
-            messages.success(request, 'Blood request created! Matching donors have been notified.')
+            messages.success(
+                request,
+                'Blood request submitted! It will be visible publicly and donors will be notified '
+                'once a club moderator approves it.'
+            )
             return redirect('request_detail', request_id=blood_request.id)
     else:
         form = BloodRequestForm()
@@ -53,7 +55,13 @@ def create_request(request):
 
 @login_required
 def request_list(request):
-    all_requests = BloodRequest.objects.all().select_related('requester', 'blood_group').order_by('-created_at')
+    all_requests = BloodRequest.objects.select_related('requester', 'blood_group').order_by('-created_at')
+
+    # Non-moderators only see approved requests. Moderators/advisors see everything.
+    if not request.user.is_club_moderator:
+        all_requests = all_requests.filter(
+            Q(moderation_status='approved') | Q(requester=request.user)
+        )
 
     blood_group_filter = request.GET.get('blood_group')
     status_filter = request.GET.get('status')
@@ -79,6 +87,13 @@ def request_list(request):
 @login_required
 def request_detail(request, request_id):
     blood_request = get_object_or_404(BloodRequest, id=request_id)
+
+    # Hide pending/rejected requests from anyone except the requester and moderators.
+    if (blood_request.moderation_status != 'approved'
+            and blood_request.requester != request.user
+            and not request.user.is_club_moderator):
+        messages.error(request, 'This request is not available.')
+        return redirect('request_list')
 
     user_response = None
     if hasattr(request.user, 'donor'):
