@@ -7,7 +7,7 @@ SECRET_KEY = 'django-insecure-uap-bloodconnect-2024-secure-key-here'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '0.0.0.0']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,6 +44,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'bloodconnect.context_processors.notifications',
             ],
         },
     },
