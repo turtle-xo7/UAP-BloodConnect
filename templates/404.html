@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Page Not Found — UAP-BloodConnect{% endblock %}
+{% block emergency_bar %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .err-wrap {
+    min-height: calc(100vh - 68px - 320px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 4rem 1.5rem; text-align: center; position: relative;
+  }
+  .err-glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(198,40,40,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .err-inner { position: relative; z-index: 1; max-width: 620px; }
+  .err-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(198,40,40,0.12); border: 1px solid rgba(198,40,40,0.35);
+    border-radius: 100px; padding: 0.4rem 1.05rem;
+    color: #ef5350; font-weight: 700; font-size: 0.75rem;
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2rem;
+  }
+  .err-drop {
+    width: 96px; height: 110px; margin: 0 auto 1.5rem;
+    background: radial-gradient(circle at 35% 30%, #ff6b6b 0%, #c62828 45%, #8b0000 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    transform: rotate(-12deg);
+    box-shadow: 0 20px 60px rgba(198,40,40,0.35), inset -10px -15px 30px rgba(0,0,0,0.25);
+    animation: err-float 4.5s ease-in-out infinite;
+    position: relative;
+  }
+  .err-drop::after {
+    content: ''; position: absolute; top: 18%; left: 22%;
+    width: 22%; height: 18%; border-radius: 50%;
+    background: rgba(255,255,255,0.4); filter: blur(2px);
+  }
+  @keyframes err-float {
+    0%,100% { transform: rotate(-12deg) translateY(0); }
+    50%     { transform: rotate(-8deg) translateY(-12px); }
+  }
+  .err-code {
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(5rem, 14vw, 9rem);
+    font-weight: 900; line-height: 1; letter-spacing: -0.04em;
+    background: linear-gradient(135deg, #ef5350 0%, #c62828 50%, #5a0000 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 0.6rem;
+  }
+  .err-title {
+    font-family: 'Poppins', sans-serif; font-size: clamp(1.4rem, 2.6vw, 2rem);
+    font-weight: 800; color: #fff; margin-bottom: 0.85rem;
+  }
+  .err-sub {
+    color: rgba(255,255,255,0.55); font-size: 1rem; line-height: 1.7;
+    max-width: 480px; margin: 0 auto 2.25rem;
+  }
+  .err-actions { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; }
+  .err-btn-primary {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    background: linear-gradient(135deg, #c62828, #8b0000);
+    color: #fff; border-radius: 12px;
+    padding: 0.85rem 1.6rem; font-size: 0.92rem; font-weight: 700;
+    text-decoration: none; box-shadow: 0 4px 20px rgba(198,40,40,0.4);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .err-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(198,40,40,0.55); color:#fff; }
+  .err-btn-ghost {
+    display: inline-flex; align-items: center; gap: 0.55rem;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.85); border-radius: 12px;
+    padding: 0.85rem 1.6rem; font-size: 0.92rem; font-weight: 600;
+    text-decoration: none; backdrop-filter: blur(8px);
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .err-btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.35); color: #fff; }
+  .err-quick {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .err-quick-title {
+    color: rgba(255,255,255,0.4); font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+  }
+  .err-links { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+  .err-link {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    padding: 0.4rem 0.9rem; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.82rem; transition: all 0.2s;
+  }
+  .err-link:hover { background: rgba(198,40,40,0.12); color: #ef5350; border-color: rgba(198,40,40,0.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="err-wrap">
+  <div class="err-glow"></div>
+  <div class="err-inner">
+    <div class="err-drop"></div>
+    <div class="err-pill"><i class="fas fa-search"></i> Page Not Found</div>
+    <div class="err-code">404</div>
+    <h1 class="err-title" data-split>This page hasn't donated yet.</h1>
+    <p class="err-sub">
+      The page you're looking for moved, was renamed, or never existed.
+      Don't worry — every other corner of the platform is still saving lives.
+    </p>
+
+    <div class="err-actions">
+      <a href="{% url 'home' %}" class="err-btn-primary">
+        <i class="fas fa-home"></i> Back Home
+      </a>
+      <a href="{% url 'request_list' %}" class="err-btn-ghost">
+        <i class="fas fa-hand-holding-medical"></i> View Requests
+      </a>
+    </div>
+
+    <div class="err-quick">
+      <div class="err-quick-title">Or jump to</div>
+      <div class="err-links">
+        <a href="{% url 'donor_directory' %}" class="err-link"><i class="fas fa-users"></i> Donors</a>
+        <a href="{% url 'leaderboard' %}" class="err-link"><i class="fas fa-trophy"></i> Leaderboard</a>
+        <a href="{% url 'drive_list' %}" class="err-link"><i class="fas fa-calendar-alt"></i> Drives</a>
+        <a href="{% url 'eligibility_checker' %}" class="err-link"><i class="fas fa-clipboard-check"></i> Eligibility</a>
+        <a href="{% url 'about' %}" class="err-link"><i class="fas fa-info-circle"></i> About</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

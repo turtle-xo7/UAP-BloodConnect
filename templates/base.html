@@ -819,13 +819,40 @@
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: hidden; }
 
+        /* ─── SPLIT TEXT REVEAL ───
+           Words rise + fade in with stagger — the 2026 staple, no
+           paid SplitText plugin needed. */
+        .split-word  { display: inline-block; }
+        .split-inner { display: inline-block; will-change: transform, opacity; }
+        html:not(.reveal-ready) [data-split] { opacity: 0; }
+
+        /* ─── FORM SUBMIT SPINNER ───
+           Inline spinner replaces the button label after submit so the
+           user knows the click was received. */
+        .btn-spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: btn-spin 0.7s linear infinite;
+            vertical-align: -2px;
+            margin-right: 0.4rem;
+        }
+        @keyframes btn-spin { to { transform: rotate(360deg); } }
+        .is-submitting {
+            opacity: 0.85 !important;
+            pointer-events: none !important;
+            cursor: wait !important;
+        }
+
         /* ─── REDUCE MOTION ───
            When the user has reduced-motion turned on, every reveal is
            instant and no smooth-scroll hijack is applied. */
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto !important; }
-            html [data-aos] { opacity: 1 !important; transform: none !important; }
-            .ripple { animation: none; display: none; }
+            html [data-aos], html [data-split] { opacity: 1 !important; transform: none !important; }
+            .ripple, .btn-spinner { animation: none; display: none; }
             #particle-canvas { display: none; }
         }
 
@@ -1224,6 +1251,90 @@
         });
     }
 
+    // ─── Split-text reveal (words rise + fade with stagger) ───
+    function splitWords(root) {
+        const process = (node) => {
+            if (node.nodeType === 3) {
+                const text = node.textContent;
+                if (!text.trim()) return;
+                const frag = document.createDocumentFragment();
+                text.split(/(\s+)/).forEach(t => {
+                    if (t.match(/\S/)) {
+                        const outer = document.createElement('span');
+                        outer.className = 'split-word';
+                        const inner = document.createElement('span');
+                        inner.className = 'split-inner';
+                        inner.textContent = t;
+                        outer.appendChild(inner);
+                        frag.appendChild(outer);
+                    } else {
+                        frag.appendChild(document.createTextNode(t));
+                    }
+                });
+                node.replaceWith(frag);
+            } else if (node.nodeType === 1 && node.tagName !== 'BR') {
+                [...node.childNodes].forEach(process);
+            }
+        };
+        [...root.childNodes].forEach(process);
+    }
+
+    function initSplitText() {
+        const els = document.querySelectorAll('[data-split]');
+        if (REDUCE_MOTION || !HAS_GSAP) {
+            els.forEach(el => { el.style.opacity = 1; });
+            return;
+        }
+        els.forEach(el => {
+            splitWords(el);
+            el.style.opacity = 1;
+            const inners = el.querySelectorAll('.split-inner');
+            const above = el.getBoundingClientRect().top < window.innerHeight * 0.9;
+            const tween = {
+                y: 28, opacity: 0,
+                duration: 0.7, ease: 'power3.out',
+                stagger: 0.045,
+            };
+            if (above) {
+                gsap.from(inners, { ...tween, delay: 0.15 });
+            } else {
+                gsap.from(inners, {
+                    ...tween,
+                    scrollTrigger: {
+                        trigger: el, start: 'top 88%',
+                        toggleActions: 'play none none none',
+                    },
+                });
+            }
+        });
+    }
+
+    // ─── Form submit spinner ───
+    function initFormSpinners() {
+        document.addEventListener('submit', e => {
+            const form = e.target;
+            if ((form.method || 'get').toLowerCase() !== 'post') return;
+            const btn = form.querySelector('button[type="submit"], input[type="submit"], button:not([type])');
+            if (!btn || btn.dataset.spinnerActive) return;
+            btn.dataset.spinnerActive = '1';
+            btn.dataset.originalHtml = btn.innerHTML;
+            const label = btn.dataset.loadingText || 'Working…';
+            btn.innerHTML = '<span class="btn-spinner"></span>' + label;
+            btn.classList.add('is-submitting');
+            btn.setAttribute('aria-busy', 'true');
+            // Safety net: if the form was prevented (validation, e.preventDefault),
+            // restore the button after a tick so users aren't stuck.
+            setTimeout(() => {
+                if (!form.checkValidity || !form.checkValidity()) {
+                    btn.innerHTML = btn.dataset.originalHtml;
+                    btn.classList.remove('is-submitting');
+                    btn.removeAttribute('aria-busy');
+                    delete btn.dataset.spinnerActive;
+                }
+            }, 50);
+        }, true);
+    }
+
     // ─── Anchor links scroll through Lenis (otherwise jump-cut feels wrong) ───
     function initAnchors() {
         document.addEventListener('click', e => {
@@ -1240,18 +1351,17 @@
     }
 
     // ─── Wire everything up ───
-    document.addEventListener('DOMContentLoaded', () => {
+    function wireAll() {
         initReveals();
+        initSplitText();
         initMagnetic();
         initRipple();
         initAnchors();
-        document.documentElement.classList.add('reveal-ready');
-    });
-    // Fallback: if DOMContentLoaded already fired (script at end of body), run now
-    if (document.readyState !== 'loading') {
-        initReveals(); initMagnetic(); initRipple(); initAnchors();
+        initFormSpinners();
         document.documentElement.classList.add('reveal-ready');
     }
+    if (document.readyState !== 'loading') wireAll();
+    else document.addEventListener('DOMContentLoaded', wireAll);
 
     // ─── Navbar scroll effect ───
     window.addEventListener('scroll', () => {
