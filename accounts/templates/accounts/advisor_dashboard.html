@@ -1,0 +1,503 @@
+{% extends 'base.html' %}
+{% load blood_filters %}
+
+{% block title %}Faculty Advisor Dashboard — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #1a0000 100%);
+    padding: 6rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .dashboard-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(198,40,40,0.15) 0%, transparent 70%);
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  .stat-card:hover { transform: translateY(-4px); border-color: var(--crimson); }
+  .stat-number { font-size: 2.5rem; font-weight: 800; color: var(--crimson); line-height: 1; }
+  .stat-label { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 0.5rem; }
+  .queue-section {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .queue-section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .queue-section h3 .count-badge {
+    background: var(--crimson);
+    color: #fff;
+    border-radius: 20px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .queue-table { width: 100%; border-collapse: collapse; }
+  .queue-table th {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+  .queue-table td {
+    padding: 0.9rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.9rem;
+  }
+  .queue-table tr:last-child td { border-bottom: none; }
+  .queue-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .action-form { display: flex; gap: 0.5rem; align-items: flex-start; }
+  .action-form textarea {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    resize: vertical;
+    min-width: 140px;
+  }
+  .btn-verify { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; }
+  .btn-verify:hover { background: rgba(34,197,94,0.25); color: #4ade80; }
+  .btn-reject { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #f87171; }
+  .btn-reject:hover { background: rgba(239,68,68,0.25); color: #f87171; }
+  .btn-approve { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; }
+  .btn-approve:hover { background: rgba(59,130,246,0.25); color: #60a5fa; }
+  .btn-sm { padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem;
+    color: rgba(255,255,255,0.3);
+  }
+  .empty-state i { font-size: 2rem; margin-bottom: 0.75rem; }
+  .status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .status-pending { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .status-verified { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .status-rejected { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .urgency-critical { color: #ef4444; font-weight: 700; }
+  .urgency-high { color: #f97316; font-weight: 600; }
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.6);
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: rgba(198,40,40,0.15);
+    border-color: var(--crimson);
+    color: #fff;
+  }
+  .tab-btn .badge { background: var(--crimson); color: #fff; border-radius: 12px; padding: 0.1rem 0.45rem; font-size: 0.7rem; margin-left: 0.4rem; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+  <div class="container">
+    <div style="position:relative; z-index:1;">
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+        <div style="width:48px;height:48px;background:rgba(198,40,40,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-shield-alt" style="color:var(--crimson);font-size:1.3rem;"></i>
+        </div>
+        <div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0;">Logged in as</p>
+          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0;">Faculty Advisor Dashboard</h1>
+        </div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);margin-bottom:2rem;">Review and approve pending items across the platform.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+        <div class="stat-card">
+          <div class="stat-number">{{ pending_donation_count }}</div>
+          <div class="stat-label">Donations Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ pending_request_count }}</div>
+          <div class="stat-label">Requests Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ pending_drive_count }}</div>
+          <div class="stat-label">Drives Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ pending_broadcast_count }}</div>
+          <div class="stat-label">Broadcasts Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ total_donors }}</div>
+          <div class="stat-label">Total Donors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ total_users }}</div>
+          <div class="stat-label">Registered Users</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section style="padding:3rem 0;">
+  <div class="container">
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('donations')">
+        <i class="fas fa-tint"></i> Donations
+        {% if pending_donation_count %}<span class="badge">{{ pending_donation_count }}</span>{% endif %}
+      </button>
+      <button class="tab-btn" onclick="switchTab('requests')">
+        <i class="fas fa-heartbeat"></i> Blood Requests
+        {% if pending_request_count %}<span class="badge">{{ pending_request_count }}</span>{% endif %}
+      </button>
+      <button class="tab-btn" onclick="switchTab('drives')">
+        <i class="fas fa-calendar-alt"></i> Drives
+        {% if pending_drive_count %}<span class="badge">{{ pending_drive_count }}</span>{% endif %}
+      </button>
+      <button class="tab-btn" onclick="switchTab('broadcasts')">
+        <i class="fas fa-broadcast-tower"></i> Broadcasts
+        {% if pending_broadcast_count %}<span class="badge">{{ pending_broadcast_count }}</span>{% endif %}
+      </button>
+    </div>
+
+    <!-- Donations Queue -->
+    <div id="tab-donations" class="tab-content active">
+      <div class="queue-section">
+        <h3>
+          <i class="fas fa-tint" style="color:var(--crimson);"></i>
+          Donation Verification Queue
+          <span class="count-badge">{{ pending_donation_count }}</span>
+        </h3>
+        {% if pending_donations %}
+        <div style="overflow-x:auto;">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Donor</th>
+                <th>Blood Group</th>
+                <th>Donation Date</th>
+                <th>Units</th>
+                <th>Hospital</th>
+                <th>Certificate</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in pending_donations %}
+              <tr>
+                <td>
+                  <strong>{{ d.donor.user.username }}</strong>
+                  <br><small style="color:rgba(255,255,255,0.4);">{{ d.donor.user.uap_id }}</small>
+                </td>
+                <td>
+                  <span class="blood-badge blood-{{ d.donor.blood_group.blood_type|blood_css }}">
+                    {{ d.donor.blood_group.blood_type }}
+                  </span>
+                </td>
+                <td>{{ d.donation_date }}</td>
+                <td>{{ d.units_donated }}</td>
+                <td>{{ d.hospital|default:"—" }}</td>
+                <td>
+                  {% if d.certificate %}
+                    <a href="{{ d.certificate.url }}" target="_blank" style="color:var(--crimson);">
+                      <i class="fas fa-file-alt"></i> View
+                    </a>
+                  {% else %}
+                    <span style="color:rgba(255,255,255,0.3);">None</span>
+                  {% endif %}
+                </td>
+                <td><small>{{ d.created_at|date:"M d, Y" }}</small></td>
+                <td>
+                  <form method="post" action="{% url 'verify_donation' d.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="verify">
+                    <button type="submit" class="btn-sm btn-verify">
+                      <i class="fas fa-check"></i> Verify
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'verify_donation' d.id %}" style="display:inline; margin-left:0.4rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <input type="text" name="rejection_reason" placeholder="Reason…"
+                           style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;padding:0.25rem 0.5rem;font-size:0.75rem;width:110px;">
+                    <button type="submit" class="btn-sm btn-reject" style="margin-top:0.25rem;">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle" style="color:#4ade80;"></i>
+          <p>No pending donations to verify.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Blood Requests Queue -->
+    <div id="tab-requests" class="tab-content">
+      <div class="queue-section">
+        <h3>
+          <i class="fas fa-heartbeat" style="color:var(--crimson);"></i>
+          Blood Request Moderation Queue
+          <span class="count-badge">{{ pending_request_count }}</span>
+        </h3>
+        {% if pending_requests %}
+        <div style="overflow-x:auto;">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Blood Group</th>
+                <th>Urgency</th>
+                <th>Patient</th>
+                <th>Location</th>
+                <th>Needed By</th>
+                <th>Document</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in pending_requests %}
+              <tr>
+                <td>
+                  <strong>{{ r.requester.username }}</strong>
+                  <br><small style="color:rgba(255,255,255,0.4);">{{ r.requester.uap_id }}</small>
+                </td>
+                <td>
+                  <span class="blood-badge blood-{{ r.blood_group.blood_type|blood_css }}">
+                    {{ r.blood_group.blood_type }}
+                  </span>
+                </td>
+                <td>
+                  <span class="urgency-{{ r.urgency }}">{{ r.get_urgency_display }}</span>
+                </td>
+                <td>{{ r.patient_name }}</td>
+                <td>{{ r.get_location_display }}</td>
+                <td>{{ r.needed_by_date|date:"M d, Y" }}</td>
+                <td>
+                  {% if r.supporting_document %}
+                    <a href="{{ r.supporting_document.url }}" target="_blank" style="color:var(--crimson);">
+                      <i class="fas fa-file"></i> View
+                    </a>
+                  {% else %}
+                    <span style="color:rgba(255,255,255,0.3);">None</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="{% url 'moderate_request' r.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-sm btn-approve" style="margin-bottom:0.3rem; display:block; width:100%;">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'moderate_request' r.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <input type="text" name="moderation_note" placeholder="Note…"
+                           style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;padding:0.25rem 0.5rem;font-size:0.75rem;width:100%;margin-bottom:0.25rem;">
+                    <button type="submit" class="btn-sm btn-reject" style="width:100%;">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle" style="color:#4ade80;"></i>
+          <p>No pending blood requests to moderate.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Drives Queue -->
+    <div id="tab-drives" class="tab-content">
+      <div class="queue-section">
+        <h3>
+          <i class="fas fa-calendar-alt" style="color:var(--crimson);"></i>
+          Donation Drive Approval Queue
+          <span class="count-badge">{{ pending_drive_count }}</span>
+        </h3>
+        {% if pending_drives %}
+        <div style="overflow-x:auto;">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Venue</th>
+                <th>Target</th>
+                <th>Organizer</th>
+                <th>Partner</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for drive in pending_drives %}
+              <tr>
+                <td><strong>{{ drive.title }}</strong></td>
+                <td>{{ drive.date }}</td>
+                <td>{{ drive.start_time|time:"g:i A" }} – {{ drive.end_time|time:"g:i A" }}</td>
+                <td>{{ drive.venue }}</td>
+                <td>{{ drive.target_units }} units</td>
+                <td>{{ drive.created_by.username }}</td>
+                <td>{{ drive.partner_organization|default:"—" }}</td>
+                <td>
+                  <form method="post" action="{% url 'approve_drive' drive.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-sm btn-approve" style="margin-bottom:0.3rem; display:block; width:100%;">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'approve_drive' drive.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn-sm btn-reject" style="width:100%;">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle" style="color:#4ade80;"></i>
+          <p>No pending drives to approve.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Broadcasts Queue -->
+    <div id="tab-broadcasts" class="tab-content">
+      <div class="queue-section">
+        <h3>
+          <i class="fas fa-broadcast-tower" style="color:var(--crimson);"></i>
+          Emergency Broadcast Approval Queue
+          <span class="count-badge">{{ pending_broadcast_count }}</span>
+        </h3>
+        {% if pending_broadcasts %}
+        <div style="overflow-x:auto;">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Message</th>
+                <th>Target Groups</th>
+                <th>Created By</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bc in pending_broadcasts %}
+              <tr>
+                <td><strong>{{ bc.title }}</strong></td>
+                <td style="max-width:200px;">
+                  <span style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                    {{ bc.message }}
+                  </span>
+                </td>
+                <td>{{ bc.target_blood_groups|default:"All" }}</td>
+                <td>{{ bc.created_by.username }}</td>
+                <td><small>{{ bc.created_at|date:"M d, Y" }}</small></td>
+                <td>
+                  <form method="post" action="{% url 'approve_broadcast' bc.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn-sm btn-approve" style="margin-bottom:0.3rem; display:block; width:100%;">
+                      <i class="fas fa-broadcast-tower"></i> Send
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'approve_broadcast' bc.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn-sm btn-reject" style="width:100%;">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="fas fa-check-circle" style="color:#4ade80;"></i>
+          <p>No pending broadcasts to approve.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

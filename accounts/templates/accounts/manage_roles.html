@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage User Roles — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #0f0f0f 100%);
+    padding: 6rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .dashboard-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(245,158,11,0.1) 0%, transparent 70%);
+  }
+  .search-bar {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    color: #fff;
+    width: 100%;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus { border-color: rgba(245,158,11,0.5); }
+  .search-bar::placeholder { color: rgba(255,255,255,0.3); }
+  .users-table-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .users-table { width: 100%; border-collapse: collapse; }
+  .users-table th {
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.4);
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+  .users-table td {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.85);
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+  .users-table tr:last-child td { border-bottom: none; }
+  .users-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--crimson), #ff6b6b);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #fff; font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .role-select {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    color: #fff;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .role-select:focus { border-color: rgba(245,158,11,0.5); }
+  .role-select option { background: #1e293b; }
+  .btn-update {
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.35);
+    color: #fbbf24;
+    padding: 0.35rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-update:hover { background: rgba(245,158,11,0.25); color: #fbbf24; }
+  .role-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .badge-role-superadmin { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-role-advisor { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+  .badge-role-medical { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .badge-role-president { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .badge-role-secretary { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .badge-role-moderator { background: rgba(20,184,166,0.15); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.3); }
+  .badge-role-coordinator { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+  .badge-role-donor { background: rgba(198,40,40,0.15); color: #ef9a9a; border: 1px solid rgba(198,40,40,0.3); }
+  .badge-role-student { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-pill .num { font-size: 1.8rem; font-weight: 800; color: #fbbf24; }
+  .stat-pill .lbl { color: rgba(255,255,255,0.5); font-size: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+  <div class="container">
+    <div style="position:relative; z-index:1;">
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+        <div style="width:48px;height:48px;background:rgba(245,158,11,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-users-cog" style="color:#fbbf24;font-size:1.3rem;"></i>
+        </div>
+        <div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0;">Super Admin</p>
+          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0;">Manage User Roles</h1>
+        </div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);margin-bottom:2rem;">Assign and update roles for all registered users.</p>
+    </div>
+  </div>
+</div>
+
+<section style="padding:3rem 0;">
+  <div class="container">
+
+    <div class="stats-row">
+      {% regroup users by role as role_groups %}
+      {% for group in role_groups %}
+      <div class="stat-pill">
+        <div class="num">{{ group.list|length }}</div>
+        <div class="lbl">{{ group.grouper|title|cut:"_" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <input type="text" class="search-bar" id="userSearch" placeholder="Search by username, UAP ID, or email…" oninput="filterUsers()">
+
+    <div class="users-table-wrap">
+      <table class="users-table" id="usersTable">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>UAP ID</th>
+            <th>Email</th>
+            <th>Current Role</th>
+            <th>Joined</th>
+            <th>Update Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr data-search="{{ u.username|lower }} {{ u.uap_id|lower }} {{ u.email|lower }}">
+            <td>
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="avatar">{{ u.username|first|upper }}</div>
+                <div>
+                  <div style="font-weight:600; color:#fff;">{{ u.username }}</div>
+                  <div style="font-size:0.78rem; color:rgba(255,255,255,0.4);">
+                    {% if u.is_superuser %}<span style="color:#f87171;">Superuser</span>{% endif %}
+                    {% if not u.is_active %}<span style="color:#f87171;">Inactive</span>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="font-family:monospace; color:rgba(255,255,255,0.6);">{{ u.uap_id }}</td>
+            <td style="color:rgba(255,255,255,0.6);">{{ u.email }}</td>
+            <td>
+              <span class="role-badge {{ u.get_role_display_badge }}">{{ u.get_role_display }}</span>
+            </td>
+            <td><small style="color:rgba(255,255,255,0.4);">{{ u.date_joined|date:"M d, Y" }}</small></td>
+            <td>
+              {% if not u.is_superuser %}
+              <form method="post" style="display:flex; gap:0.5rem; align-items:center;">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <select name="role" class="role-select">
+                  {% for value, label in role_choices %}
+                  <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn-update">
+                  <i class="fas fa-save"></i> Save
+                </button>
+              </form>
+              {% else %}
+              <span style="color:rgba(255,255,255,0.3); font-size:0.82rem;">Django superuser</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:2rem; padding:1.5rem; background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); border-radius:14px;">
+      <h4 style="color:#fbbf24; margin-bottom:1rem; font-size:0.95rem;">
+        <i class="fas fa-info-circle"></i> Role Hierarchy
+      </h4>
+      <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+        <span class="role-badge badge-role-superadmin">Super Admin (9)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-advisor">Faculty Advisor (8)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-medical">Medical Verifier (7)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-president">Club President (6)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-secretary">Club Secretary (5)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-moderator">Club Moderator (4)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-coordinator">Camp Coordinator (3)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-donor">Donor (2)</span>
+        <span style="color:rgba(255,255,255,0.3);">→</span>
+        <span class="role-badge badge-role-student">Student (1)</span>
+      </div>
+      <p style="color:rgba(255,255,255,0.4); font-size:0.82rem; margin-top:0.75rem; margin-bottom:0;">
+        Higher-level roles inherit all permissions of roles below them. Superusers bypass all role checks.
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+    const s = row.getAttribute('data-search') || '';
+    row.style.display = s.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

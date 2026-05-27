@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load blood_filters %}
+
+{% block title %}Club President Dashboard — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #0a0a2e 100%);
+    padding: 6rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .dashboard-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(99,102,241,0.15) 0%, transparent 70%);
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  .stat-card:hover { transform: translateY(-4px); border-color: #6366f1; }
+  .stat-number { font-size: 2.5rem; font-weight: 800; color: #818cf8; line-height: 1; }
+  .stat-label { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 0.5rem; }
+  .section-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .section-card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .drive-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+  }
+  .drive-card:hover { border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.05); }
+  .drive-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .status-upcoming { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .status-active { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .status-completed { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+  .status-cancelled { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .approved-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .approved-yes { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .approved-no { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .broadcast-card {
+    background: rgba(198,40,40,0.05);
+    border: 1px solid rgba(198,40,40,0.2);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .quick-action-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 1.25rem;
+    text-align: center;
+    text-decoration: none;
+    color: rgba(255,255,255,0.8);
+    transition: all 0.3s;
+    display: block;
+  }
+  .quick-action-btn:hover {
+    background: rgba(99,102,241,0.1);
+    border-color: #6366f1;
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-3px);
+  }
+  .quick-action-btn i { font-size: 1.5rem; margin-bottom: 0.5rem; color: #818cf8; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-hero">
+  <div class="container">
+    <div style="position:relative; z-index:1;">
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+        <div style="width:48px;height:48px;background:rgba(99,102,241,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-crown" style="color:#818cf8;font-size:1.3rem;"></i>
+        </div>
+        <div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0;">Club President</p>
+          <h1 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0;">President Dashboard</h1>
+        </div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);margin-bottom:2rem;">Manage donation drives and monitor club activities.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_donors }}</div>
+          <div class="stat-label">Registered Donors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ active_requests }}</div>
+          <div class="stat-label">Active Requests</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ drives|length }}</div>
+          <div class="stat-label">Recent Drives</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ pending_broadcasts|length }}</div>
+          <div class="stat-label">My Pending Broadcasts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section style="padding:3rem 0;">
+  <div class="container">
+
+    <div class="quick-actions">
+      <a href="{% url 'create_drive' %}" class="quick-action-btn">
+        <i class="fas fa-plus-circle"></i>
+        Create New Drive
+      </a>
+      <a href="{% url 'drive_list' %}" class="quick-action-btn">
+        <i class="fas fa-calendar-alt"></i>
+        View All Drives
+      </a>
+      <a href="{% url 'leaderboard' %}" class="quick-action-btn">
+        <i class="fas fa-trophy"></i>
+        Donor Leaderboard
+      </a>
+      <a href="{% url 'request_list' %}" class="quick-action-btn">
+        <i class="fas fa-heartbeat"></i>
+        Blood Requests
+      </a>
+    </div>
+
+    <div class="section-card">
+      <h3>
+        <i class="fas fa-calendar-alt" style="color:#818cf8;"></i>
+        Recent Donation Drives
+      </h3>
+      {% if drives %}
+        {% for drive in drives %}
+        <div class="drive-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem;">
+            <div>
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem;">
+                <strong style="color:#fff; font-size:1rem;">{{ drive.title }}</strong>
+                <span class="drive-status status-{{ drive.status }}">{{ drive.get_status_display }}</span>
+                <span class="approved-badge {% if drive.is_approved %}approved-yes{% else %}approved-no{% endif %}">
+                  {% if drive.is_approved %}
+                    <i class="fas fa-check"></i> Approved
+                  {% else %}
+                    <i class="fas fa-clock"></i> Pending
+                  {% endif %}
+                </span>
+              </div>
+              <div style="color:rgba(255,255,255,0.5); font-size:0.85rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+                <span><i class="fas fa-calendar"></i> {{ drive.date }}</span>
+                <span><i class="fas fa-clock"></i> {{ drive.start_time|time:"g:i A" }} – {{ drive.end_time|time:"g:i A" }}</span>
+                <span><i class="fas fa-map-marker-alt"></i> {{ drive.venue }}</span>
+                <span><i class="fas fa-tint"></i> Target: {{ drive.target_units }} units</span>
+                <span><i class="fas fa-users"></i> {{ drive.registrations_count }} registered</span>
+              </div>
+              {% if drive.partner_organization %}
+              <div style="margin-top:0.4rem; color:rgba(255,255,255,0.4); font-size:0.8rem;">
+                <i class="fas fa-handshake"></i> Partner: {{ drive.partner_organization }}
+              </div>
+              {% endif %}
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <a href="{% url 'drive_detail' drive.id %}"
+                 style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.8rem;font-weight:600;text-decoration:none;">
+                <i class="fas fa-eye"></i> View
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div style="text-align:center; padding:2.5rem; color:rgba(255,255,255,0.3);">
+        <i class="fas fa-calendar-times" style="font-size:2rem; margin-bottom:0.75rem; display:block;"></i>
+        <p>No donation drives created yet.</p>
+        <a href="{% url 'create_drive' %}" style="color:#818cf8; font-weight:600;">Create your first drive →</a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if pending_broadcasts %}
+    <div class="section-card">
+      <h3>
+        <i class="fas fa-broadcast-tower" style="color:var(--crimson);"></i>
+        My Pending Broadcasts
+      </h3>
+      {% for bc in pending_broadcasts %}
+      <div class="broadcast-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <strong style="color:#fff;">{{ bc.title }}</strong>
+            <p style="color:rgba(255,255,255,0.5); font-size:0.85rem; margin:0.4rem 0 0;">{{ bc.message|truncatewords:25 }}</p>
+            <small style="color:rgba(255,255,255,0.3);">Submitted {{ bc.created_at|date:"M d, Y" }}</small>
+          </div>
+          <span style="background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.72rem;font-weight:700;">
+            <i class="fas fa-clock"></i> Awaiting Advisor Approval
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
