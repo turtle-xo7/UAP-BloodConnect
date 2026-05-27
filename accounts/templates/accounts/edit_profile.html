@@ -1,41 +1,445 @@
 {% extends 'base.html' %}
+{% load blood_filters %}
 
-{% block title %}Edit Profile - UAP-BloodConnect{% endblock %}
+{% block title %}Edit Profile — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-hero {
+    background: linear-gradient(160deg, #0F172A 0%, #1a0000 55%, #0F172A 100%);
+    padding: 5.5rem 0 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .edit-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 60%, rgba(198,40,40,0.15) 0%, transparent 65%);
+  }
+  .edit-hero-inner {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 1.25rem;
+  }
+  .edit-avatar-thumb {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(198,40,40,0.5);
+    flex-shrink: 0;
+  }
+  .edit-avatar-placeholder {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 800; color: #fff;
+    flex-shrink: 0; font-family: 'Poppins', sans-serif;
+  }
+
+  .edit-body {
+    background: var(--slate-900);
+    padding: 2.5rem 0 5rem;
+    min-height: 60vh;
+  }
+  .edit-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 1.75rem;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .edit-layout { grid-template-columns: 1fr; } }
+
+  /* ── Nav sidebar ── */
+  .edit-nav {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 88px;
+  }
+  .edit-nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.88rem; font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .edit-nav-item:hover {
+    color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.03);
+    text-decoration: none;
+  }
+  .edit-nav-item.active {
+    color: #fff;
+    background: rgba(198,40,40,0.08);
+    border-left-color: var(--crimson);
+  }
+  .edit-nav-item i { width: 16px; text-align: center; font-size: 0.85rem; }
+
+  /* ── Form card ── */
+  .edit-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .edit-card-title {
+    font-size: 1rem; font-weight: 700; color: #fff;
+    margin-bottom: 0.35rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .edit-card-title i { color: var(--crimson-light); }
+  .edit-card-sub {
+    color: rgba(255,255,255,0.35); font-size: 0.82rem; margin-bottom: 1.75rem;
+  }
+
+  .field-group { margin-bottom: 1.4rem; }
+  .field-group label {
+    display: block;
+    color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 600;
+    margin-bottom: 0.45rem; letter-spacing: 0.02em;
+  }
+  .edit-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 11px;
+    color: #fff;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .edit-input::placeholder { color: rgba(255,255,255,0.18); }
+  .edit-input:focus {
+    border-color: var(--crimson);
+    background: rgba(198,40,40,0.07);
+    box-shadow: 0 0 0 3px rgba(198,40,40,0.12);
+  }
+  select.edit-input { cursor: pointer; }
+  select.edit-input option { background: #1e293b; }
+  textarea.edit-input { resize: vertical; min-height: 90px; line-height: 1.55; }
+
+  .field-error {
+    color: #f87171; font-size: 0.76rem; margin-top: 0.35rem;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+
+  /* ── Photo upload ── */
+  .photo-upload-area {
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .current-photo {
+    width: 80px; height: 80px;
+    border-radius: 50%; object-fit: cover;
+    border: 3px solid rgba(198,40,40,0.4);
+    flex-shrink: 0;
+  }
+  .photo-placeholder {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; font-weight: 800; color: #fff;
+    flex-shrink: 0; font-family: 'Poppins', sans-serif;
+  }
+  .photo-upload-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.55);
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .photo-upload-btn:hover {
+    border-color: rgba(198,40,40,0.4);
+    color: var(--crimson-light);
+    background: rgba(198,40,40,0.06);
+  }
+
+  /* ── Blood type selector ── */
+  .blood-type-grid {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .blood-type-option { display: none; }
+  .blood-type-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 58px; height: 42px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.08);
+    font-size: 0.88rem; font-weight: 700;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .blood-type-label:hover { border-color: rgba(198,40,40,0.4); color: rgba(255,255,255,0.8); }
+  .blood-type-option:checked + .blood-type-label {
+    background: rgba(198,40,40,0.15);
+    border-color: var(--crimson);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(198,40,40,0.25);
+  }
+
+  /* ── Action buttons ── */
+  .form-actions {
+    display: flex; gap: 0.75rem; align-items: center;
+    margin-top: 0.5rem; flex-wrap: wrap;
+  }
+  .btn-save {
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    color: #fff; border: none; border-radius: 11px;
+    padding: 0.85rem 2rem;
+    font-size: 0.95rem; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(198,40,40,0.3);
+    transition: all 0.25s;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(198,40,40,0.4); }
+  .btn-cancel {
+    color: rgba(255,255,255,0.4);
+    text-decoration: none; font-size: 0.88rem; font-weight: 500;
+    transition: color 0.2s;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .btn-cancel:hover { color: rgba(255,255,255,0.75); text-decoration: none; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <div class="card">
-        <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">Edit Profile</h2>
-        
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            {% for field in form %}
-            <div class="form-group">
-                <label class="form-label">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}
-                <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
-                    {{ field.help_text }}
-                </div>
-                {% endif %}
-                {% if field.errors %}
-                <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.25rem;">
-                    {{ field.errors }}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-            
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    Save Changes
-                </button>
-                <a href="{% url 'profile' %}" class="btn btn-outline" style="flex: 1; text-align: center;">
-                    Cancel
-                </a>
-            </div>
-        </form>
+
+<div class="edit-hero">
+  <div class="container">
+    <div class="edit-hero-inner">
+      {% with profile=form.instance %}
+      {% if profile.profile_picture %}
+        <img src="{{ profile.profile_picture.url }}" alt="Avatar" class="edit-avatar-thumb">
+      {% else %}
+        <div class="edit-avatar-placeholder">{{ user.username|first|upper }}</div>
+      {% endif %}
+      {% endwith %}
+      <div>
+        <h1 style="font-size:1.6rem; font-weight:800; color:#fff; margin-bottom:0.2rem;">Edit Profile</h1>
+        <p style="color:rgba(255,255,255,0.4); font-size:0.88rem;">Update your personal information and preferences.</p>
+      </div>
     </div>
+  </div>
 </div>
+
+<div class="edit-body">
+  <div class="container">
+    <div class="edit-layout">
+
+      <!-- Sidebar nav -->
+      <div>
+        <div class="edit-nav">
+          <a href="#photo" class="edit-nav-item active" onclick="scrollTo(this, 'sec-photo')">
+            <i class="fas fa-camera"></i> Photo
+          </a>
+          <a href="#personal" class="edit-nav-item" onclick="scrollTo(this, 'sec-personal')">
+            <i class="fas fa-user"></i> Personal Details
+          </a>
+          <a href="#blood" class="edit-nav-item" onclick="scrollTo(this, 'sec-blood')">
+            <i class="fas fa-tint"></i> Blood Group
+          </a>
+          <a href="#bio" class="edit-nav-item" onclick="scrollTo(this, 'sec-bio')">
+            <i class="fas fa-align-left"></i> Bio
+          </a>
+        </div>
+        <div style="margin-top:1rem; padding:1rem; background:rgba(198,40,40,0.05); border:1px solid rgba(198,40,40,0.15); border-radius:12px;">
+          <p style="color:rgba(255,255,255,0.35); font-size:0.78rem; line-height:1.55;">
+            <i class="fas fa-info-circle" style="color:var(--crimson-light); margin-right:0.3rem;"></i>
+            To change your username or password, contact the admin.
+          </p>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form method="post" enctype="multipart/form-data" id="editForm">
+        {% csrf_token %}
+
+        <!-- Photo section -->
+        <div class="edit-card" id="sec-photo">
+          <div class="edit-card-title"><i class="fas fa-camera"></i> Profile Photo</div>
+          <div class="edit-card-sub">A clear photo helps people recognise you.</div>
+          <div class="photo-upload-area">
+            {% if form.instance.profile_picture %}
+              <img src="{{ form.instance.profile_picture.url }}" alt="Current" class="current-photo" id="photoPreview">
+            {% else %}
+              <div class="photo-placeholder" id="photoPlaceholder">{{ user.username|first|upper }}</div>
+            {% endif %}
+            <div>
+              <label for="{{ form.profile_picture.id_for_label }}" class="photo-upload-btn">
+                <i class="fas fa-upload"></i> Choose Photo
+              </label>
+              <div style="display:none;">{{ form.profile_picture }}</div>
+              <p style="color:rgba(255,255,255,0.25); font-size:0.75rem; margin-top:0.5rem;">
+                JPG, PNG · max 2 MB
+              </p>
+              {% if form.profile_picture.errors %}
+              <div class="field-error"><i class="fas fa-times-circle"></i> {{ form.profile_picture.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal details section -->
+        <div class="edit-card" id="sec-personal">
+          <div class="edit-card-title"><i class="fas fa-user"></i> Personal Details</div>
+          <div class="edit-card-sub">Your basic info shown on your profile.</div>
+
+          <div class="field-group">
+            <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+            <input type="date"
+                   name="{{ form.date_of_birth.html_name }}"
+                   id="{{ form.date_of_birth.id_for_label }}"
+                   class="edit-input"
+                   value="{{ form.date_of_birth.value|default:'' }}">
+            {% if form.date_of_birth.errors %}
+            <div class="field-error"><i class="fas fa-times-circle"></i> {{ form.date_of_birth.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Blood group section -->
+        <div class="edit-card" id="sec-blood">
+          <div class="edit-card-title"><i class="fas fa-tint"></i> Blood Group</div>
+          <div class="edit-card-sub">Used on your public profile and when matching requests.</div>
+
+          <div class="blood-type-grid">
+            {% for value, label in form.fields.blood_group.choices %}
+            {% if value %}
+            <div>
+              <input type="radio"
+                     name="{{ form.blood_group.html_name }}"
+                     id="bg_{{ value }}"
+                     value="{{ value }}"
+                     class="blood-type-option"
+                     {% if form.blood_group.value == value %}checked{% endif %}>
+              <label for="bg_{{ value }}" class="blood-type-label">{{ label }}</label>
+            </div>
+            {% endif %}
+            {% endfor %}
+            <!-- "None" option -->
+            <div>
+              <input type="radio"
+                     name="{{ form.blood_group.html_name }}"
+                     id="bg_none"
+                     value=""
+                     class="blood-type-option"
+                     {% if not form.blood_group.value %}checked{% endif %}>
+              <label for="bg_none" class="blood-type-label" style="width:auto; padding:0 0.75rem; font-size:0.78rem; color:rgba(255,255,255,0.35);">
+                Not set
+              </label>
+            </div>
+          </div>
+          {% if form.blood_group.errors %}
+          <div class="field-error" style="margin-top:0.5rem;">
+            <i class="fas fa-times-circle"></i> {{ form.blood_group.errors|striptags }}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Bio section -->
+        <div class="edit-card" id="sec-bio">
+          <div class="edit-card-title"><i class="fas fa-align-left"></i> Bio</div>
+          <div class="edit-card-sub">A short note about yourself — shown on your public profile.</div>
+
+          <div class="field-group" style="margin-bottom:0;">
+            <textarea name="{{ form.bio.html_name }}"
+                      id="{{ form.bio.id_for_label }}"
+                      class="edit-input"
+                      rows="4"
+                      maxlength="500"
+                      placeholder="Tell the community a bit about yourself…"
+                      oninput="updateCharCount(this)">{{ form.bio.value|default:'' }}</textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
+              <span id="bioCharCount" style="color:rgba(255,255,255,0.25); font-size:0.75rem;">
+                {{ form.bio.value|default:''|length }}/500
+              </span>
+            </div>
+            {% if form.bio.errors %}
+            <div class="field-error"><i class="fas fa-times-circle"></i> {{ form.bio.errors|striptags }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          <a href="{% url 'profile' %}" class="btn-cancel">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live photo preview
+document.querySelector('input[type="file"]')?.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview = document.getElementById('photoPreview');
+    const placeholder = document.getElementById('photoPlaceholder');
+    if (preview) {
+      preview.src = ev.target.result;
+    } else if (placeholder) {
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.className = 'current-photo';
+      img.id = 'photoPreview';
+      placeholder.replaceWith(img);
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+// Bio char count
+function updateCharCount(el) {
+  document.getElementById('bioCharCount').textContent = el.value.length + '/500';
+}
+
+// Sidebar active highlight on scroll
+const sections = document.querySelectorAll('.edit-card[id]');
+const navItems = document.querySelectorAll('.edit-nav-item');
+function scrollTo(el, id) {
+  event.preventDefault();
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  navItems.forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(n => {
+        n.classList.toggle('active', n.getAttribute('onclick')?.includes(id));
+      });
+    }
+  });
+}, { threshold: 0.5, rootMargin: '-80px 0px 0px 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
 {% endblock %}
