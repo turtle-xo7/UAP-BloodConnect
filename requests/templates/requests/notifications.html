@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — UAP-BloodConnect{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;" data-aos="fade-down">
+    <div>
+        <h1 style="font-family:'Poppins',sans-serif;font-weight:900;color:white;margin-bottom:0.25rem;">
+            <i class="fas fa-bell" style="color:var(--crimson-light);"></i> Notifications
+        </h1>
+        <p style="color:rgba(255,255,255,0.45);">
+            {% if unread_count %}
+                <span style="color:#FCA5A5;font-weight:700;">{{ unread_count }} unread</span>
+            {% else %}
+                All caught up!
+            {% endif %}
+        </p>
+    </div>
+    {% if unread_count %}
+    <a href="{% url 'mark_all_read' %}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-check-double"></i> Mark All Read
+    </a>
+    {% endif %}
+</div>
+
+{% if notifications %}
+    {% for notif in notifications %}
+    <div class="card" style="padding:1.25rem 1.5rem;margin-bottom:0.75rem;border-left:4px solid {% if not notif.is_read %}var(--crimson){% else %}rgba(255,255,255,0.08){% endif %};{% if not notif.is_read %}box-shadow:0 4px 25px rgba(198,40,40,0.12);{% endif %}"
+        data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+            <div style="display:flex;gap:1rem;align-items:flex-start;flex:1;">
+                <div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem;
+                    {% if notif.notification_type == 'achievement' %}background:rgba(245,158,11,0.2);color:#FCD34D;
+                    {% elif notif.notification_type == 'new_request' %}background:rgba(198,40,40,0.2);color:#FCA5A5;
+                    {% elif notif.notification_type == 'response' %}background:rgba(22,163,74,0.2);color:#6EE7B7;
+                    {% elif notif.notification_type == 'matched' %}background:rgba(59,130,246,0.2);color:#93C5FD;
+                    {% else %}background:rgba(124,58,237,0.2);color:#C4B5FD;{% endif %}">
+                    {% if notif.notification_type == 'achievement' %}<i class="fas fa-trophy"></i>
+                    {% elif notif.notification_type == 'new_request' %}<i class="fas fa-tint"></i>
+                    {% elif notif.notification_type == 'response' %}<i class="fas fa-hand-holding-heart"></i>
+                    {% elif notif.notification_type == 'matched' %}<i class="fas fa-link"></i>
+                    {% else %}<i class="fas fa-bell"></i>{% endif %}
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:{% if not notif.is_read %}700{% else %}600{% endif %};color:rgba(255,255,255,0.9);margin-bottom:0.2rem;">
+                        {{ notif.title }}
+                        {% if not notif.is_read %}
+                            <span style="display:inline-block;width:8px;height:8px;background:var(--crimson);border-radius:50%;margin-left:0.5rem;animation:pulse-badge 2s infinite;"></span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size:0.875rem;color:rgba(255,255,255,0.55);line-height:1.6;">{{ notif.message }}</div>
+                    <div style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-top:0.4rem;">
+                        <i class="fas fa-clock"></i> {{ notif.created_at|timesince }} ago
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-shrink:0;">
+                {% if notif.action_url %}
+                <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-primary btn-sm">
+                    View
+                </a>
+                {% endif %}
+                {% if not notif.is_read %}
+                <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-ghost btn-sm" title="Mark as read">
+                    <i class="fas fa-check"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align:center;padding:4rem 2rem;">
+        <i class="fas fa-bell-slash" style="font-size:3rem;color:var(--slate-300);display:block;margin-bottom:1rem;"></i>
+        <h3 style="color:var(--slate-600);margin-bottom:0.5rem;">No notifications yet</h3>
+        <p style="color:var(--slate-400);margin-bottom:2rem;">Register as a donor or submit a blood request to start receiving notifications.</p>
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Back to Home
+        </a>
+    </div>
+{% endif %}
+
+</div>
+{% endblock %}

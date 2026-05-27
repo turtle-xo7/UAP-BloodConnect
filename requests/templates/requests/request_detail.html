@@ -1,225 +1,483 @@
 {% extends 'base.html' %}
+{% load blood_filters %}
+{% block title %}Blood Request — {{ blood_request.patient_name }} — UAP-BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ─── Page Layout ─── */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.75rem;
+    align-items: start;
+}
 
-{% block title %}Request Details - UAP-BloodConnect{% endblock %}
+/* ─── Request Header ─── */
+.req-header {
+    background: linear-gradient(135deg,rgba(15,23,42,0.95),rgba(26,10,10,0.9));
+    border-radius: 20px;
+    padding: 2rem;
+    border-left: 5px solid var(--crimson);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.req-header.critical { border-left-color: var(--crimson); animation: critPulse 3s ease-in-out infinite; }
+.req-header.high     { border-left-color: #EA580C; }
+.req-header.medium   { border-left-color: #D97706; }
+.req-header.low      { border-left-color: #16A34A; }
+@keyframes critPulse {
+    0%,100% { box-shadow: 0 0 0 rgba(198,40,40,0); }
+    50% { box-shadow: 0 0 30px rgba(198,40,40,0.25); }
+}
+.req-header::before {
+    content:'';
+    position:absolute;
+    width:300px;height:300px;
+    background:radial-gradient(circle,rgba(198,40,40,0.1) 0%,transparent 70%);
+    top:-80px;right:-80px;pointer-events:none;
+}
+.rh-title {
+    font-family:'Poppins',sans-serif;
+    font-size: clamp(1.25rem,2.5vw,1.75rem);
+    font-weight:900;
+    color:white;
+    margin-bottom:0.75rem;
+    display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;
+}
+.rh-badges { display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem; }
 
+/* ─── Info Sections ─── */
+.info-section { margin-bottom:1.5rem; }
+.info-section-title {
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.35);
+    margin-bottom:0.85rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+.info-section-title::after {
+    content:'';flex:1;
+    height:1px;
+    background:rgba(255,255,255,0.08);
+}
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.info-item {
+    background:rgba(255,255,255,0.04);
+    border-radius:12px;
+    padding:0.85rem 1rem;
+    border:1px solid rgba(255,255,255,0.07);
+    transition:border-color 0.2s;
+}
+.info-item:hover { border-color:rgba(198,40,40,0.2); }
+.info-label { font-size:0.72rem; color:rgba(255,255,255,0.4); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.3rem; }
+.info-value { font-weight:700; color:rgba(255,255,255,0.85); font-size:0.9rem; }
+
+/* Description block */
+.desc-block {
+    background:rgba(255,255,255,0.04);
+    border-radius:14px;
+    padding:1.25rem;
+    border-left:3px solid rgba(198,40,40,0.4);
+    border-top:1px solid rgba(255,255,255,0.07);
+    border-right:1px solid rgba(255,255,255,0.07);
+    border-bottom:1px solid rgba(255,255,255,0.07);
+    color:rgba(255,255,255,0.7);
+    line-height:1.7;
+    font-size:0.9rem;
+}
+
+/* ─── Respond Card ─── */
+.respond-card {
+    background: linear-gradient(135deg,rgba(198,40,40,0.1),rgba(139,0,0,0.08));
+    border-radius:16px;
+    padding:1.5rem;
+    border:1.5px solid rgba(198,40,40,0.25);
+    margin-bottom:1.5rem;
+}
+.respond-card h3 {
+    font-family:'Poppins',sans-serif;
+    font-weight:800;
+    color:white;
+    margin-bottom:1rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+.respond-textarea {
+    width:100%;
+    padding:0.85rem 1rem;
+    background:rgba(255,255,255,0.08);
+    border:1.5px solid rgba(255,255,255,0.15);
+    border-radius:10px;
+    color:rgba(255,255,255,0.9);
+    font-family:'Inter',sans-serif;
+    font-size:0.9rem;
+    resize:vertical;
+    transition:border-color 0.2s;
+    min-height:100px;
+}
+.respond-textarea:focus {
+    outline:none;
+    border-color:var(--crimson);
+    box-shadow:0 0 0 3px rgba(198,40,40,0.15);
+}
+
+/* Response item */
+.resp-item {
+    background:rgba(255,255,255,0.04);
+    border-radius:12px;
+    padding:1rem;
+    border:1px solid rgba(255,255,255,0.08);
+    margin-bottom:0.75rem;
+    transition:border-color 0.2s;
+}
+.resp-item:hover { border-color:rgba(255,255,255,0.15); }
+
+/* ─── Sidebar ─── */
+.sidebar-sticky { position:sticky; top:88px; }
+.sidebar-card {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:1.25rem;
+    margin-bottom:1.25rem;
+}
+.sidebar-card h3 {
+    font-family:'Poppins',sans-serif;
+    font-size:0.85rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    color:rgba(255,255,255,0.5);
+    margin-bottom:1rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+
+.summary-row {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0.6rem 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    font-size:0.85rem;
+}
+.summary-row:last-child { border-bottom:none; }
+.sum-key { color:rgba(255,255,255,0.45); }
+.sum-val { font-weight:700; color:rgba(255,255,255,0.85); }
+
+.action-link {
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    padding:0.85rem 1rem;
+    border-radius:10px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    text-decoration:none;
+    color:rgba(255,255,255,0.75);
+    font-size:0.875rem;
+    font-weight:600;
+    transition:all 0.2s;
+    margin-bottom:0.5rem;
+}
+.action-link:hover {
+    background:rgba(198,40,40,0.15);
+    border-color:rgba(198,40,40,0.3);
+    color:white;
+    transform:translateX(4px);
+}
+
+/* Progress bar for units */
+.units-progress {
+    background:rgba(255,255,255,0.06);
+    border-radius:100px;
+    height:8px;
+    overflow:hidden;
+    margin-top:0.5rem;
+}
+.units-fill {
+    height:100%;
+    border-radius:100px;
+    background:linear-gradient(90deg,var(--crimson),var(--crimson-light));
+    transition:width 1.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+@media(max-width:1024px){ .detail-grid { grid-template-columns:1fr; } }
+@media(max-width:768px){ .info-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-   <div class="lg:col-span-2">
-       <div class="card">
-           <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 2rem;">
-               <div style="flex: 1;">
-                   <h1 style="color: var(--primary-red); margin: 0 0 0.5rem 0;">
-                       {% if blood_request.urgency == 'critical' %}🚨{% elif blood_request.urgency == 'high' %}⚠️{% endif %}
-                       Blood Request for {{ blood_request.patient_name }}
-                   </h1>
-                   <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                       {% if blood_request.blood_group.blood_type == "A+" %}
-                           <span class="blood-badge blood-a-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "A-" %}
-                           <span class="blood-badge blood-a-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "B+" %}
-                           <span class="blood-badge blood-b-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "B-" %}
-                           <span class="blood-badge blood-b-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "O+" %}
-                           <span class="blood-badge blood-o-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "O-" %}
-                           <span class="blood-badge blood-o-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "AB+" %}
-                           <span class="blood-badge blood-ab-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "AB-" %}
-                           <span class="blood-badge blood-ab-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% else %}
-                           <span class="blood-badge">{{ blood_request.blood_group.blood_type }}</span>
-                       {% endif %}
 
-                       <span class="urgency-badge urgency-{{ blood_request.urgency }}">
-                           {{ blood_request.get_urgency_display }}
-                       </span>
-
-                       <span class="status-badge status-{{ blood_request.status }}">
-                           {{ blood_request.get_status_display }}
-                       </span>
-                   </div>
-               </div>
-           </div>
-
-
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom: 2rem;">
-               <div>
-                   <h4 style="color: var(--gray-600); margin-bottom: 0.5rem;">Patient Information</h4>
-                   <p><strong>Name:</strong> {{ blood_request.patient_name }}</p>
-                   {% if blood_request.patient_age %}
-                   <p><strong>Age:</strong> {{ blood_request.patient_age }} years</p>
-                   {% endif %}
-                   <p><strong>Units Required:</strong> {{ blood_request.units_required }}</p>
-               </div>
-
-               <div>
-                   <h4 style="color: var(--gray-600); margin-bottom: 0.5rem;">Request Details</h4>
-                   <p><strong>Location:</strong> {{ blood_request.get_location_display }}</p>
-                   <p><strong>Needed By:</strong> {{ blood_request.needed_by_date|date:"M d, Y H:i" }}</p>
-                   <p><strong>Requested By:</strong> {{ blood_request.requester.username }}</p>
-               </div>
-           </div>
-
-
-           {% if blood_request.description %}
-           <div style="margin-bottom: 2rem;">
-               <h4 style="color: var(--gray-600); margin-bottom: 0.5rem;">Additional Information</h4>
-               <p style="color: var(--gray-600); line-height: 1.6;">{{ blood_request.description }}</p>
-           </div>
-           {% endif %}
-
-
-           {% if blood_request.supporting_document %}
-           <div style="margin-bottom: 2rem;">
-               <h4 style="color: var(--gray-600); margin-bottom: 0.5rem;">Supporting Document</h4>
-               <a href="{{ blood_request.supporting_document.url }}" class="btn btn-outline" target="_blank">
-                   📄 View Document
-               </a>
-           </div>
-           {% endif %}
-       </div>
-
-
-       {% if can_respond %}
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1.5rem;">Respond to this Request</h3>
-           <form method="post">
-               {% csrf_token %}
-               <div class="form-group">
-                   <label class="form-label">Message (Optional)</label>
-                   {{ form.message }}
-               </div>
-               <button type="submit" class="btn btn-primary">
-                   I Can Help Donate
-               </button>
-           </form>
-       </div>
-       {% elif user_response %}
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1.5rem;">Your Response</h3>
-           <div style="background: var(--light-red); padding: 1.5rem; border-radius: 0.5rem;">
-               <p><strong>Status:</strong>
-                   <span style="color: {% if user_response.status == 'accepted' %}green{% elif user_response.status == 'pending' %}orange{% else %}red{% endif %};">
-                       {{ user_response.get_status_display }}
-                   </span>
-               </p>
-               {% if user_response.message %}
-               <p><strong>Your Message:</strong> {{ user_response.message }}</p>
-               {% endif %}
-               <p><strong>Responded:</strong> {{ user_response.responded_at|timesince }} ago</p>
-           </div>
-       </div>
-       {% endif %}
-
-
-       {% if responses %}
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1.5rem;">Donor Responses ({{ responses|length }})</h3>
-           <div class="grid grid-cols-1 gap-3">
-               {% for response in responses %}
-               <div style="background: var(--gray-100); padding: 1rem; border-radius: 0.5rem;">
-                   <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
-                       <div>
-                           <strong>{{ response.donor.user.username }}</strong>
-                           <span style="color: var(--gray-600); font-size: 0.875rem;">
-                               • {{ response.donor.get_location_display }}
-                           </span>
-                       </div>
-                       <span style="color: {% if response.status == 'accepted' %}green{% elif response.status == 'pending' %}orange{% else %}red{% endif %}; font-size: 0.875rem;">
-                           {{ response.get_status_display }}
-                       </span>
-                   </div>
-                   {% if response.message %}
-                   <p style="margin: 0; color: var(--gray-600); font-size: 0.875rem;">{{ response.message }}</p>
-                   {% endif %}
-                   <div style="color: var(--gray-600); font-size: 0.75rem; margin-top: 0.5rem;">
-                       Responded {{ response.responded_at|timesince }} ago
-                   </div>
-               </div>
-               {% endfor %}
-           </div>
-       </div>
-       {% endif %}
-   </div>
-
-   <div class="lg:col-span-1">
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1rem;">Quick Actions</h3>
-           <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-               <a href="{% url 'request_list' %}" class="btn btn-outline" style="text-align: center;">
-                   ← Back to Requests
-               </a>
-               {% if user == blood_request.requester %}
-               <a href="{% url 'my_requests' %}" class="btn btn-outline" style="text-align: center;">
-                   📋 My Requests
-               </a>
-               {% endif %}
-               {% if user.donor and not user_response %}
-               <a href="{% url 'respond_to_request' blood_request.id %}" class="btn btn-primary" style="text-align: center;">
-                   💪 Respond to Help
-               </a>
-               {% endif %}
-           </div>
-       </div>
-
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1rem;">Request Summary</h3>
-           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-               <div style="display: flex; justify-content: between;">
-                   <span>Blood Group:</span>
-                   <strong>
-                       {% if blood_request.blood_group.blood_type == "A+" %}
-                           <span class="blood-badge blood-a-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "A-" %}
-                           <span class="blood-badge blood-a-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "B+" %}
-                           <span class="blood-badge blood-b-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "B-" %}
-                           <span class="blood-badge blood-b-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "O+" %}
-                           <span class="blood-badge blood-o-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "O-" %}
-                           <span class="blood-badge blood-o-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "AB+" %}
-                           <span class="blood-badge blood-ab-plus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% elif blood_request.blood_group.blood_type == "AB-" %}
-                           <span class="blood-badge blood-ab-minus">{{ blood_request.blood_group.blood_type }}</span>
-                       {% else %}
-                           <span class="blood-badge">{{ blood_request.blood_group.blood_type }}</span>
-                       {% endif %}
-                   </strong>
-               </div>
-               <div style="display: flex; justify-content: between;">
-                   <span>Urgency:</span>
-                   <span class="urgency-badge urgency-{{ blood_request.urgency }}">
-                       {{ blood_request.get_urgency_display }}
-                   </span>
-               </div>
-               <div style="display: flex; justify-content: between;">
-                   <span>Status:</span>
-                   <span class="status-badge status-{{ blood_request.status }}">
-                       {{ blood_request.get_status_display }}
-                   </span>
-               </div>
-               <div style="display: flex; justify-content: between;">
-                   <span>Location:</span>
-                   <strong>{{ blood_request.get_location_display }}</strong>
-               </div>
-               <div style="display: flex; justify-content: between;">
-                   <span>Units Needed:</span>
-                   <strong>{{ blood_request.units_required }}</strong>
-               </div>
-               <div style="display: flex; justify-content: between;">
-                   <span>Created:</span>
-                   <strong>{{ blood_request.created_at|timesince }} ago</strong>
-               </div>
-           </div>
-       </div>
-   </div>
+<!-- Back link -->
+<div style="margin-bottom:1rem;" data-aos="fade-right">
+    <a href="{% url 'request_list' %}" style="color:rgba(255,255,255,0.45);font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;transition:color 0.2s;"
+       onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">
+        <i class="fas fa-chevron-left"></i> Back to Requests
+    </a>
 </div>
+
+<div class="detail-grid">
+    <!-- ─── LEFT COLUMN ─── -->
+    <div>
+
+        <!-- Header card -->
+        <div class="req-header {{ blood_request.urgency }}" data-aos="fade-up">
+            <div style="position:relative;z-index:1;">
+                <div class="rh-title">
+                    {% if blood_request.urgency == 'critical' %}
+                    <span style="background:rgba(198,40,40,0.3);color:#FCA5A5;padding:0.2rem 0.7rem;border-radius:6px;font-size:0.72rem;letter-spacing:1px;font-weight:800;">🚨 CRITICAL</span>
+                    {% elif blood_request.urgency == 'high' %}
+                    <span style="color:#FDBA74;">⚠️</span>
+                    {% endif %}
+                    Blood Request — {{ blood_request.patient_name }}
+                </div>
+                <div class="rh-badges">
+                    <span class="blood-badge {{ blood_request.blood_group.blood_type|blood_css }}" style="font-size:0.88rem;padding:0.45rem 1.1rem;">
+                        <i class="fas fa-tint" style="font-size:0.7rem;margin-right:0.25rem;"></i>
+                        {{ blood_request.blood_group.blood_type }}
+                    </span>
+                    <span class="urgency-badge urgency-{{ blood_request.urgency }}">{{ blood_request.get_urgency_display }}</span>
+                    <span class="status-badge status-{{ blood_request.status }}">{{ blood_request.get_status_display }}</span>
+                </div>
+                <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+                    <span style="font-size:0.82rem;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:0.4rem;">
+                        <i class="fas fa-map-marker-alt" style="color:var(--crimson-light);"></i>
+                        {{ blood_request.get_location_display }}
+                    </span>
+                    <span style="font-size:0.82rem;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:0.4rem;">
+                        <i class="fas fa-clock" style="color:rgba(255,255,255,0.3);"></i>
+                        {{ blood_request.created_at|timesince }} ago
+                    </span>
+                    <span style="font-size:0.82rem;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:0.4rem;">
+                        <i class="fas fa-user" style="color:rgba(255,255,255,0.3);"></i>
+                        {{ blood_request.requester.username }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Info -->
+        <div class="info-section" data-aos="fade-up" data-aos-delay="50">
+            <div class="info-section-title"><i class="fas fa-user-injured" style="color:var(--crimson-light);"></i> Patient Information</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Patient Name</div>
+                    <div class="info-value">{{ blood_request.patient_name }}</div>
+                </div>
+                {% if blood_request.patient_age %}
+                <div class="info-item">
+                    <div class="info-label">Age</div>
+                    <div class="info-value">{{ blood_request.patient_age }} years</div>
+                </div>
+                {% endif %}
+                <div class="info-item">
+                    <div class="info-label">Blood Type Required</div>
+                    <div class="info-value">
+                        <span class="blood-badge {{ blood_request.blood_group.blood_type|blood_css }}">{{ blood_request.blood_group.blood_type }}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Units Required</div>
+                    <div class="info-value">
+                        {{ blood_request.units_required }} unit{{ blood_request.units_required|pluralize }}
+                        <div class="units-progress"><div class="units-fill" style="width:{% widthratio blood_request.units_required 10 100 %}%;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="info-section" data-aos="fade-up" data-aos-delay="80">
+            <div class="info-section-title"><i class="fas fa-clipboard-list" style="color:var(--crimson-light);"></i> Request Details</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Location</div>
+                    <div class="info-value"><i class="fas fa-map-marker-alt" style="color:var(--crimson-light);margin-right:0.35rem;"></i>{{ blood_request.get_location_display }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Needed By</div>
+                    <div class="info-value"><i class="fas fa-calendar" style="color:rgba(255,255,255,0.3);margin-right:0.35rem;"></i>{{ blood_request.needed_by_date|date:"M d, Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Requested By</div>
+                    <div class="info-value">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <div style="width:24px;height:24px;background:rgba(198,40,40,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:white;">{{ blood_request.requester.username|first|upper }}</div>
+                            {{ blood_request.requester.username }}
+                        </div>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Posted</div>
+                    <div class="info-value">{{ blood_request.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if blood_request.description %}
+        <div class="info-section" data-aos="fade-up" data-aos-delay="100">
+            <div class="info-section-title"><i class="fas fa-align-left" style="color:var(--crimson-light);"></i> Additional Information</div>
+            <div class="desc-block">{{ blood_request.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Document -->
+        {% if blood_request.supporting_document %}
+        <div class="info-section" data-aos="fade-up" data-aos-delay="110">
+            <div class="info-section-title"><i class="fas fa-file-medical" style="color:var(--crimson-light);"></i> Supporting Document</div>
+            <a href="{{ blood_request.supporting_document.url }}" class="action-link" target="_blank">
+                <i class="fas fa-file-pdf" style="color:#FCA5A5;font-size:1.1rem;"></i>
+                <div>
+                    <div style="color:white;">View Document</div>
+                    <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">Click to open in new tab</div>
+                </div>
+                <i class="fas fa-external-link-alt" style="margin-left:auto;color:rgba(255,255,255,0.3);"></i>
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Respond Form -->
+        {% if can_respond %}
+        <div class="respond-card" data-aos="fade-up" data-aos-delay="120">
+            <h3><i class="fas fa-hand-holding-heart" style="color:var(--crimson-light);"></i> I Can Help Donate</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Message (Optional)</label>
+                    <textarea name="message" class="respond-textarea" placeholder="Let the requester know you're available, your contact info, or any other helpful details..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                    <i class="fas fa-heart"></i> Confirm — I Will Donate
+                </button>
+            </form>
+        </div>
+        {% elif user_response %}
+        <div class="respond-card" style="border-color:rgba(22,163,74,0.3);" data-aos="fade-up" data-aos-delay="120">
+            <h3><i class="fas fa-check-circle" style="color:#4ADE80;"></i> Your Response</h3>
+            <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem;">
+                <span style="font-weight:600;color:rgba(255,255,255,0.6);">Status:</span>
+                <span style="font-weight:700;color:{% if user_response.status == 'accepted' %}#4ADE80{% elif user_response.status == 'pending' %}#FCD34D{% else %}#FCA5A5{% endif %};">
+                    {{ user_response.get_status_display }}
+                </span>
+            </div>
+            {% if user_response.message %}
+            <div class="desc-block" style="margin-bottom:0.75rem;">{{ user_response.message }}</div>
+            {% endif %}
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.35);">
+                <i class="fas fa-clock"></i> Responded {{ user_response.responded_at|timesince }} ago
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Donor Responses -->
+        {% if responses %}
+        <div class="info-section" data-aos="fade-up" data-aos-delay="130">
+            <div class="info-section-title">
+                <i class="fas fa-users" style="color:var(--crimson-light);"></i>
+                Donor Responses ({{ responses|length }})
+            </div>
+            {% for response in responses %}
+            <div class="resp-item">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:0.9rem;">
+                            {{ response.donor.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight:700;color:rgba(255,255,255,0.85);font-size:0.875rem;">{{ response.donor.user.username }}</div>
+                            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);"><i class="fas fa-map-marker-alt" style="color:rgba(198,40,40,0.5);"></i> {{ response.donor.get_location_display }}</div>
+                        </div>
+                    </div>
+                    <span style="font-weight:700;font-size:0.8rem;color:{% if response.status == 'accepted' %}#4ADE80{% elif response.status == 'pending' %}#FCD34D{% else %}#FCA5A5{% endif %};">
+                        {{ response.get_status_display }}
+                    </span>
+                </div>
+                {% if response.message %}
+                <p style="margin:0;color:rgba(255,255,255,0.6);font-size:0.85rem;line-height:1.5;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border-radius:8px;">{{ response.message }}</p>
+                {% endif %}
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin-top:0.5rem;">
+                    <i class="fas fa-clock"></i> {{ response.responded_at|timesince }} ago
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div><!-- /left -->
+
+    <!-- ─── RIGHT SIDEBAR ─── -->
+    <div class="sidebar-sticky" data-aos="fade-left">
+
+        <!-- Summary -->
+        <div class="sidebar-card">
+            <h3><i class="fas fa-clipboard-check" style="color:var(--crimson-light);"></i> Summary</h3>
+            <div class="summary-row">
+                <span class="sum-key">Blood Type</span>
+                <span class="blood-badge {{ blood_request.blood_group.blood_type|blood_css }}">{{ blood_request.blood_group.blood_type }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Urgency</span>
+                <span class="urgency-badge urgency-{{ blood_request.urgency }}" style="font-size:0.75rem;padding:0.3rem 0.7rem;">{{ blood_request.get_urgency_display }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Status</span>
+                <span class="status-badge status-{{ blood_request.status }}" style="font-size:0.75rem;padding:0.3rem 0.7rem;">{{ blood_request.get_status_display }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Location</span>
+                <span class="sum-val">{{ blood_request.get_location_display }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Units Needed</span>
+                <span class="sum-val">{{ blood_request.units_required }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Needed By</span>
+                <span class="sum-val">{{ blood_request.needed_by_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="summary-row">
+                <span class="sum-key">Posted</span>
+                <span class="sum-val">{{ blood_request.created_at|timesince }} ago</span>
+            </div>
+            {% if responses %}
+            <div class="summary-row">
+                <span class="sum-key">Responses</span>
+                <span class="sum-val" style="color:var(--crimson-light);">{{ responses|length }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-card">
+            <h3><i class="fas fa-bolt" style="color:var(--gold-dark);"></i> Quick Actions</h3>
+            <a href="{% url 'request_list' %}" class="action-link">
+                <i class="fas fa-list" style="color:rgba(255,255,255,0.4);"></i>
+                All Requests
+            </a>
+            {% if user == blood_request.requester %}
+            <a href="{% url 'my_requests' %}" class="action-link">
+                <i class="fas fa-clipboard" style="color:rgba(255,255,255,0.4);"></i>
+                My Requests
+            </a>
+            {% endif %}
+            {% if user.is_authenticated and not user_response and can_respond %}
+            <button onclick="document.querySelector('.respond-card form').scrollIntoView({behavior:'smooth'})" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">
+                <i class="fas fa-heart"></i> Respond Now
+            </button>
+            {% endif %}
+            <a href="{% url 'donor_directory' %}" class="action-link" style="margin-top:0.5rem;">
+                <i class="fas fa-users" style="color:rgba(255,255,255,0.4);"></i>
+                Find More Donors
+            </a>
+        </div>
+
+    </div><!-- /sidebar -->
+</div>
+
 {% endblock %}

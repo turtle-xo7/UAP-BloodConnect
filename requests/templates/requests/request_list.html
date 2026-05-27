@@ -1,143 +1,424 @@
 {% extends 'base.html' %}
+{% load blood_filters %}
+{% block title %}Blood Requests — UAP-BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ─── Page Hero ─── */
+.req-hero {
+    background: linear-gradient(135deg,rgba(139,0,0,0.5) 0%,rgba(8,14,26,0.8) 60%);
+    border: 1px solid rgba(198,40,40,0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+.req-hero::before {
+    content:'';
+    position:absolute;
+    width:350px; height:350px;
+    background: radial-gradient(circle, rgba(198,40,40,0.2) 0%, transparent 70%);
+    top:-100px; right:-80px;
+    pointer-events:none;
+}
+.req-hero::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 30px,
+        rgba(255,255,255,0.01) 30px,
+        rgba(255,255,255,0.01) 31px
+    );
+    pointer-events:none;
+}
+.req-hero-left { position:relative;z-index:1; }
+.req-hero-title {
+    font-family:'Poppins',sans-serif;
+    font-size: clamp(1.5rem,3vw,2.25rem);
+    font-weight: 900;
+    color: white;
+    margin-bottom: 0.4rem;
+    line-height: 1.2;
+}
+.req-hero-sub { color:rgba(255,255,255,0.55); font-size:0.95rem; }
+.req-hero-right { position:relative;z-index:1;display:flex;gap:1rem;align-items:center;flex-wrap:wrap; }
 
-{% block title %}Blood Requests - UAP-BloodConnect{% endblock %}
+/* ─── Filter Bar ─── */
+.filter-bar {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 5;
+}
+.filter-bar-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 1rem;
+}
+.filter-row { display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap; }
+.filter-group { flex:1; min-width:160px; }
 
+/* Blood type chips */
+.blood-chips { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem; }
+.blood-chip {
+    padding: 0.3rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display:inline-flex;align-items:center;gap:0.3rem;
+}
+.blood-chip:hover, .blood-chip.active {
+    background: rgba(198,40,40,0.2);
+    border-color: rgba(198,40,40,0.5);
+    color: #FCA5A5;
+    transform: translateY(-2px);
+}
+
+/* ─── Request Card ─── */
+.req-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(14px);
+    border-radius: 16px;
+    border-left: 4px solid rgba(255,255,255,0.2);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+.req-card::before {
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    opacity:0;
+    transition: opacity 0.3s;
+    border-radius:16px;
+    pointer-events:none;
+}
+.req-card:hover { transform: translateX(6px); }
+.req-card:hover::before { opacity:1; }
+.req-card.critical {
+    border-left-color: #C62828;
+    background: rgba(198,40,40,0.1);
+    box-shadow: 0 4px 25px rgba(198,40,40,0.18);
+}
+.req-card.critical::before { background: linear-gradient(90deg, rgba(198,40,40,0.07), transparent); }
+.req-card.high    { border-left-color:#EA580C; background:rgba(234,88,12,0.08); }
+.req-card.high::before { background: linear-gradient(90deg, rgba(234,88,12,0.06), transparent); }
+.req-card.medium  { border-left-color:#D97706; background:rgba(215,119,6,0.08); }
+.req-card.medium::before { background: linear-gradient(90deg, rgba(215,119,6,0.06), transparent); }
+.req-card.low     { border-left-color:#16A34A; background:rgba(22,163,74,0.07); }
+.req-card.low::before { background: linear-gradient(90deg, rgba(22,163,74,0.05), transparent); }
+
+.req-top { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1rem; }
+.req-name {
+    font-family:'Poppins',sans-serif;
+    font-weight:800;
+    font-size:1.05rem;
+    color:white;
+    margin-bottom:0.5rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+.req-badges { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+.req-meta { display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:0.75rem; }
+.req-meta-item {
+    display:flex;align-items:center;gap:0.35rem;
+    font-size:0.82rem; color:rgba(255,255,255,0.55);
+}
+.req-meta-item i { color:rgba(198,40,40,0.7); font-size:0.75rem; }
+.req-desc {
+    font-size:0.875rem;
+    color:rgba(255,255,255,0.6);
+    line-height:1.6;
+    margin-bottom:0.75rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    border-left: 2px solid rgba(255,255,255,0.1);
+}
+.req-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; }
+.req-author { font-size:0.78rem; color:rgba(255,255,255,0.4); display:flex;align-items:center;gap:0.35rem; }
+
+/* Critical pulse */
+.req-card.critical { animation: criticalPulse 3s ease-in-out infinite; }
+@keyframes criticalPulse {
+    0%,100% { box-shadow: 0 4px 25px rgba(198,40,40,0.18); }
+    50% { box-shadow: 0 4px 35px rgba(198,40,40,0.35); }
+}
+
+/* ─── Summary bar ─── */
+.summary-bar {
+    display:grid;
+    grid-template-columns: repeat(4,1fr);
+    gap:1rem;
+    margin-bottom:2rem;
+}
+.sum-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius:12px;
+    padding:1rem;
+    text-align:center;
+    transition: all 0.3s;
+}
+.sum-item:hover { border-color:rgba(198,40,40,0.3); transform:translateY(-3px); }
+.sum-num { font-family:'Poppins',sans-serif; font-size:1.75rem; font-weight:900; color:white; display:block; line-height:1; }
+.sum-label { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:rgba(255,255,255,0.4); margin-top:0.3rem; }
+
+/* ─── Empty State ─── */
+.empty-state {
+    text-align:center; padding:5rem 2rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius:20px;
+}
+.empty-icon {
+    width:80px;height:80px;
+    background: linear-gradient(135deg,rgba(198,40,40,0.2),rgba(139,0,0,0.1));
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:2rem; color:var(--crimson-light);
+    margin:0 auto 1.5rem;
+    border: 1px solid rgba(198,40,40,0.2);
+}
+.empty-state h3 { color:rgba(255,255,255,0.8); font-family:'Poppins',sans-serif; font-weight:700; margin-bottom:0.5rem; }
+.empty-state p { color:rgba(255,255,255,0.4); margin-bottom:2rem; }
+
+@media(max-width:768px) {
+    .summary-bar { grid-template-columns:repeat(2,1fr); }
+    .req-top { flex-direction:column; }
+    .req-hero { padding:1.5rem; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="card">
-   <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem;">
-       <h1 style="color: var(--primary-red); margin: 0;">Blood Requests</h1>
-       <a href="{% url 'create_request' %}" class="btn btn-primary">
-           🩺 Create New Request
-       </a>
-   </div>
 
-
-   <div class="filter-section">
-       <h3 style="color: var(--gray-600); margin-bottom: 1rem;">Filter Requests</h3>
-       <form method="get" class="filter-grid">
-           <div class="form-group">
-               <label class="form-label">Blood Group</label>
-               <select name="blood_group" class="form-control">
-                   <option value="">All Blood Groups</option>
-                   <option value="A+">A+</option>
-                   <option value="A-">A-</option>
-                   <option value="B+">B+</option>
-                   <option value="B-">B-</option>
-                   <option value="O+">O+</option>
-                   <option value="O-">O-</option>
-                   <option value="AB+">AB+</option>
-                   <option value="AB-">AB-</option>
-               </select>
-           </div>
-
-           <div class="form-group">
-               <label class="form-label">Status</label>
-               <select name="status" class="form-control">
-                   <option value="">All Status</option>
-                   <option value="open">Open</option>
-                   <option value="in_progress">In Progress</option>
-                   <option value="fulfilled">Fulfilled</option>
-                   <option value="closed">Closed</option>
-               </select>
-           </div>
-
-           <div class="form-group">
-               <label class="form-label">Urgency</label>
-               <select name="urgency" class="form-control">
-                   <option value="">All Urgency</option>
-                   <option value="low">Low</option>
-                   <option value="medium">Medium</option>
-                   <option value="high">High</option>
-                   <option value="critical">Critical</option>
-               </select>
-           </div>
-
-           <div class="form-group">
-               <button type="submit" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
-           </div>
-       </form>
-   </div>
-
-
-   <div class="grid grid-cols-1 gap-4">
-       {% for request in requests %}
-       <div class="request-card {{ request.urgency }}">
-           <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 1rem;">
-               <div style="flex: 1;">
-                   <h3 style="margin: 0 0 0.5rem 0; color: var(--gray-800);">
-                       {% if request.urgency == 'critical' %}🚨{% elif request.urgency == 'high' %}⚠️{% endif %}
-                       {{ request.patient_name }}
-                       {% if request.patient_age %}
-                           ({{ request.patient_age }} years)
-                       {% endif %}
-                   </h3>
-                   <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                       {% if request.blood_group.blood_type == "A+" %}
-                           <span class="blood-badge blood-a-plus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "A-" %}
-                           <span class="blood-badge blood-a-minus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "B+" %}
-                           <span class="blood-badge blood-b-plus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "B-" %}
-                           <span class="blood-badge blood-b-minus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "O+" %}
-                           <span class="blood-badge blood-o-plus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "O-" %}
-                           <span class="blood-badge blood-o-minus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "AB+" %}
-                           <span class="blood-badge blood-ab-plus">{{ request.blood_group.blood_type }}</span>
-                       {% elif request.blood_group.blood_type == "AB-" %}
-                           <span class="blood-badge blood-ab-minus">{{ request.blood_group.blood_type }}</span>
-                       {% else %}
-                           <span class="blood-badge">{{ request.blood_group.blood_type }}</span>
-                       {% endif %}
-
-                       <span class="urgency-badge urgency-{{ request.urgency }}">
-                           {{ request.get_urgency_display }}
-                       </span>
-
-                       <span class="status-badge status-{{ request.status }}">
-                           {{ request.get_status_display }}
-                       </span>
-                   </div>
-               </div>
-               <div style="text-align: right;">
-                   <div style="color: var(--gray-600); font-size: 0.875rem;">
-                       📍 {{ request.get_location_display }}
-                   </div>
-                   <div style="color: var(--gray-600); font-size: 0.875rem;">
-                       Needed by: {{ request.needed_by_date|date:"M d, Y" }}
-                   </div>
-               </div>
-           </div>
-
-           {% if request.description %}
-           <div style="margin-bottom: 1rem;">
-               <p style="margin: 0; color: var(--gray-600);">{{ request.description }}</p>
-           </div>
-           {% endif %}
-
-           <div style="display: flex; justify-content: space-between; align-items: center;">
-               <div style="color: var(--gray-600); font-size: 0.875rem;">
-                   Requested by: {{ request.requester.username }}
-                   • {{ request.created_at|timesince }} ago
-               </div>
-               <a href="{% url 'request_detail' request.id %}" class="btn btn-outline" style="font-size: 0.875rem;">
-                   View Details
-               </a>
-           </div>
-       </div>
-       {% empty %}
-       <div class="card" style="text-align: center; padding: 3rem;">
-           <h3 style="color: var(--gray-600); margin-bottom: 1rem;">No blood requests found</h3>
-           <p style="color: var(--gray-600); margin-bottom: 2rem;">Be the first to create a blood request or try adjusting your filters.</p>
-           <a href="{% url 'create_request' %}" class="btn btn-primary">
-               Create First Request
-           </a>
-       </div>
-       {% endfor %}
-   </div>
+<!-- Hero -->
+<div class="req-hero" data-aos="fade-down">
+    <div class="req-hero-left">
+        <div class="req-hero-title">
+            <i class="fas fa-tint" style="color:#EF5350;margin-right:0.5rem;"></i>
+            Blood Requests
+        </div>
+        <div class="req-hero-sub">Find and respond to urgent blood needs in your community</div>
+    </div>
+    <div class="req-hero-right">
+        {% if user.is_authenticated %}
+        <a href="{% url 'create_request' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> New Request
+        </a>
+        {% endif %}
+        <a href="{% url 'donor_directory' %}" class="btn btn-outline-white">
+            <i class="fas fa-users"></i> Find Donors
+        </a>
+    </div>
 </div>
+
+<!-- Summary Stats -->
+{% if requests %}
+<div class="summary-bar" data-aos="fade-up" data-aos-delay="50">
+    <div class="sum-item">
+        <span class="sum-num" data-count="{{ requests|length }}">0</span>
+        <span class="sum-label">Total Requests</span>
+    </div>
+    <div class="sum-item" style="border-color:rgba(198,40,40,0.2);">
+        <span class="sum-num" style="color:#FCA5A5;">
+            {% with count=0 %}
+            {% for r in requests %}{% if r.urgency == 'critical' %}{% with count=count|add:1 %}{% endwith %}{% endif %}{% endfor %}
+            {{ requests|length }}
+            {% endwith %}
+        </span>
+        <span class="sum-label" style="color:rgba(252,165,165,0.7);">Critical</span>
+    </div>
+    <div class="sum-item" style="border-color:rgba(22,163,74,0.2);">
+        <span class="sum-num" style="color:#6EE7B7;">Open</span>
+        <span class="sum-label" style="color:rgba(110,231,183,0.7);">Status</span>
+    </div>
+    <div class="sum-item">
+        <span class="sum-num" style="color:#FCD34D;font-size:1.1rem;padding-top:0.35rem;">24/7</span>
+        <span class="sum-label">Available</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter Bar -->
+<div class="filter-bar" data-aos="fade-up" data-aos-delay="100">
+    <div class="filter-bar-title"><i class="fas fa-filter" style="margin-right:0.4rem;"></i> Filter Requests</div>
+    <!-- Quick blood type chips -->
+    <div class="blood-chips">
+        {% with s=request.GET.status u=request.GET.urgency bg=request.GET.blood_group %}
+        <a href="?{% if s %}status={{ s }}&{% endif %}{% if u %}urgency={{ u }}{% endif %}"
+           class="blood-chip {% if not bg %}active{% endif %}">All Types</a>
+        {% for btype in blood_groups %}
+        <a href="?blood_group={{ btype.blood_type }}{% if s %}&status={{ s }}{% endif %}{% if u %}&urgency={{ u }}{% endif %}"
+           class="blood-chip {% if bg == btype.blood_type %}active{% endif %}">
+            <i class="fas fa-tint" style="font-size:0.65rem;"></i> {{ btype.blood_type }}
+        </a>
+        {% empty %}
+        <a href="?blood_group=A+{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'A+' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> A+</a>
+        <a href="?blood_group=A-{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'A-' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> A-</a>
+        <a href="?blood_group=B+{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'B+' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> B+</a>
+        <a href="?blood_group=B-{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'B-' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> B-</a>
+        <a href="?blood_group=O+{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'O+' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> O+</a>
+        <a href="?blood_group=O-{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'O-' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> O-</a>
+        <a href="?blood_group=AB+{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'AB+' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> AB+</a>
+        <a href="?blood_group=AB-{% if s %}&status={{ s }}{% endif %}" class="blood-chip {% if bg == 'AB-' %}active{% endif %}"><i class="fas fa-tint" style="font-size:0.65rem;"></i> AB-</a>
+        {% endfor %}
+        {% endwith %}
+    </div>
+    <form method="get" class="filter-row">
+        {% if request.GET.blood_group %}
+        <input type="hidden" name="blood_group" value="{{ request.GET.blood_group }}">
+        {% endif %}
+        <div class="filter-group">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Status</option>
+                <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
+                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="fulfilled" {% if request.GET.status == 'fulfilled' %}selected{% endif %}>Fulfilled</option>
+                <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="form-label">Urgency</label>
+            <select name="urgency" class="form-control">
+                <option value="">All Urgency</option>
+                <option value="critical" {% if request.GET.urgency == 'critical' %}selected{% endif %}>🚨 Critical</option>
+                <option value="high" {% if request.GET.urgency == 'high' %}selected{% endif %}>⚠️ High</option>
+                <option value="medium" {% if request.GET.urgency == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="low" {% if request.GET.urgency == 'low' %}selected{% endif %}>Low</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Apply
+            </button>
+            {% if request.GET %}
+            <a href="{% url 'request_list' %}" class="btn btn-outline-white">
+                <i class="fas fa-times"></i> Clear
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Request Cards -->
+<div id="requests-container">
+    {% for req in requests %}
+    <div class="req-card {{ req.urgency }}" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'0' }}0">
+        <div class="req-top">
+            <div style="flex:1;">
+                <div class="req-name">
+                    {% if req.urgency == 'critical' %}
+                        <span style="background:rgba(198,40,40,0.3);color:#FCA5A5;padding:0.15rem 0.5rem;border-radius:6px;font-size:0.75rem;letter-spacing:0.5px;animation:criticalText 1.5s infinite;">🚨 CRITICAL</span>
+                    {% elif req.urgency == 'high' %}
+                        <span style="color:#FDBA74;font-size:0.8rem;">⚠️</span>
+                    {% endif %}
+                    {{ req.patient_name }}
+                    {% if req.patient_age %}<span style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-weight:500;">({{ req.patient_age }}y)</span>{% endif %}
+                </div>
+                <div class="req-badges">
+                    <span class="blood-badge {{ req.blood_group.blood_type|blood_css }}">
+                        <i class="fas fa-tint" style="font-size:0.65rem;"></i>
+                        {{ req.blood_group.blood_type }}
+                    </span>
+                    <span class="urgency-badge urgency-{{ req.urgency }}">{{ req.get_urgency_display }}</span>
+                    <span class="status-badge status-{{ req.status }}">{{ req.get_status_display }}</span>
+                    {% if req.units_required %}
+                    <span style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);padding:0.3rem 0.7rem;border-radius:100px;font-size:0.75rem;font-weight:600;">
+                        <i class="fas fa-flask" style="font-size:0.65rem;"></i> {{ req.units_required }} unit{{ req.units_required|pluralize }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:0.9rem;color:rgba(255,255,255,0.7);">
+                    <i class="fas fa-map-marker-alt" style="color:var(--crimson-light);"></i>
+                    {{ req.get_location_display }}
+                </div>
+                {% if req.needed_by_date %}
+                <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:0.3rem;">
+                    <i class="fas fa-calendar-alt" style="color:rgba(255,255,255,0.3);"></i>
+                    By {{ req.needed_by_date|date:"M d, Y" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if req.description %}
+        <div class="req-desc">{{ req.description|truncatewords:25 }}</div>
+        {% endif %}
+
+        <div class="req-footer">
+            <div class="req-author">
+                <div style="width:24px;height:24px;background:rgba(198,40,40,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:white;font-weight:700;">
+                    {{ req.requester.username|first|upper }}
+                </div>
+                {{ req.requester.username }} &middot; {{ req.created_at|timesince }} ago
+            </div>
+            <a href="{% url 'request_detail' req.id %}" class="btn btn-sm"
+               style="background:rgba(198,40,40,0.2);border:1px solid rgba(198,40,40,0.4);color:#FCA5A5;transition:all 0.2s;">
+                <i class="fas fa-arrow-right"></i> View Details
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state" data-aos="fade-up">
+        <div class="empty-icon"><i class="fas fa-tint-slash"></i></div>
+        <h3>No blood requests found</h3>
+        <p>{% if request.GET %}Try adjusting your filters or {% endif %}be the first to post a request.</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'create_request' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Create First Request
+        </a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Login to Post
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Hover glow on details button
+document.querySelectorAll('.req-footer .btn-sm').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+        this.style.background = 'rgba(198,40,40,0.35)';
+        this.style.transform = 'translateX(3px)';
+    });
+    btn.addEventListener('mouseleave', function() {
+        this.style.background = 'rgba(198,40,40,0.2)';
+        this.style.transform = 'translateX(0)';
+    });
+});
+</script>
 {% endblock %}
