@@ -1,80 +1,238 @@
 {% extends 'base.html' %}
+{% block title %}About UAP-BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+.about-hero {
+    background: linear-gradient(135deg, #0F172A, #1a0a0a);
+    border-radius: 24px;
+    padding: 4rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 3rem;
+}
+.about-hero::before {
+    content:'';position:absolute;
+    width:600px;height:600px;
+    background:radial-gradient(circle,rgba(198,40,40,0.15) 0%,transparent 70%);
+    top:-200px;left:50%;transform:translateX(-50%);
+}
+.why-item {
+    display:flex;gap:1rem;align-items:flex-start;
+    padding:1.5rem;border-radius:16px;
+    background:white;border:1px solid var(--slate-200);
+    transition:all 0.3s ease;
+}
+.why-item:hover { border-color:var(--crimson);transform:translateY(-4px);box-shadow:0 12px 40px rgba(198,40,40,0.1); }
+.why-icon { width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0; }
+.why-title { font-family:'Poppins',sans-serif;font-weight:700;color:var(--slate-900);margin-bottom:0.35rem; }
+.why-desc { font-size:0.875rem;color:var(--slate-600);line-height:1.6; }
 
-{% block title %}About - UAP-BloodConnect{% endblock %}
-
-
-{% block content %}
-<div class="card">
-   <h1 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">About UAP-BloodConnect</h1>
-
-   <div style="max-width: 800px; margin: 0 auto;">
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="margin-bottom: 3rem;">
-           <div class="card">
-               <h3 style="color: var(--primary-red); margin-bottom: 1rem;">🎯 Our Mission</h3>
-               <p>UAP-BloodConnect is dedicated to creating a reliable, efficient, and community-driven platform that bridges the gap between blood donors and recipients within the University of Asia Pacific community. We believe that no one should suffer due to blood shortages when there are willing donors nearby.</p>
-           </div>
-           <div class="card">
-               <h3 style="color: var(--secondary-blue); margin-bottom: 1rem;">🌟 Our Vision</h3>
-               <p>To eliminate preventable deaths due to blood shortages by leveraging technology and community participation, making blood donation accessible, efficient, and rewarding for everyone involved in the UAP community.</p>
-           </div>
-       </div>
-
-
-       <div class="card" style="margin-bottom: 3rem;">
-           <h3 style="color: var(--primary-red); margin-bottom: 1.5rem; text-align: center;">Why UAP-BloodConnect?</h3>
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                   <h4 style="color: var(--dark-red); margin-bottom: 0.5rem;">🚨 Emergency Response</h4>
-                   <p>Immediate connection during critical situations when every minute counts.</p>
-               </div>
-               <div>
-                   <h4 style="color: var(--dark-red); margin-bottom: 0.5rem;">🏫 Community Focus</h4>
-                   <p>Exclusive to UAP members, ensuring trust and reliability.</p>
-               </div>
-               <div>
-                   <h4 style="color: var(--dark-red); margin-bottom: 0.5rem;">📱 Easy to Use</h4>
-                   <p>Simple interface designed for quick access during emergencies.</p>
-               </div>
-               <div>
-                   <h4 style="color: var(--dark-red); margin-bottom: 0.5rem;">🛡️ Safety First</h4>
-                   <p>Verified users and secure communication channels.</p>
-               </div>
-           </div>
-       </div>
-
-
-       <div style="background: var(--light-red); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
-           <h3 style="color: var(--primary-red); margin-bottom: 1rem; text-align: center;">Safety Features</h3>
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-               <ul style="list-style-type: none;">
-                   <li style="padding: 0.5rem 0;">✅ Verified UAP community members only</li>
-                   <li style="padding: 0.5rem 0;">✅ Secure communication platform</li>
-                   <li style="padding: 0.5rem 0;">✅ 90-day donation interval enforcement</li>
-               </ul>
-               <ul style="list-style-type: none;">
-                   <li style="padding: 0.5rem 0;">✅ Emergency response prioritization</li>
-                   <li style="padding: 0.5rem 0;">✅ Location-based matching</li>
-                   <li style="padding: 0.5rem 0;">✅ Privacy protection</li>
-               </ul>
-           </div>
-       </div>
-
-
-       <div class="card">
-           <h3 style="color: var(--primary-red); margin-bottom: 1rem; text-align: center;">Join Our Life-Saving Mission</h3>
-           <p style="text-align: center; margin-bottom: 1.5rem;">Whether you're a student, faculty member, or staff, you can make a difference. Register today and become part of a community that saves lives.</p>
-           <div style="text-align: center;">
-               {% if user.is_authenticated %}
-                   <p>Thank you for being part of our life-saving community! 🎉</p>
-               {% else %}
-                   <a href="{% url 'register' %}" class="btn btn-primary">Join Now</a>
-               {% endif %}
-           </div>
-       </div>
-   </div>
-</div>
+.team-card {
+    background:white;border-radius:20px;padding:2rem;text-align:center;
+    border:1px solid var(--slate-200);transition:all 0.3s ease;
+}
+.team-card:hover { transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,0.1); }
+.team-avatar { width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));display:flex;align-items:center;justify-content:center;color:white;font-family:'Poppins',sans-serif;font-size:2rem;font-weight:800;margin:0 auto 1rem; }
+</style>
 {% endblock %}
 
+{% block content %}
 
+<!-- Hero -->
+<div class="about-hero" data-aos="fade-up">
+    <div style="position:relative;z-index:1;">
+        <div class="section-tag" style="background:rgba(198,40,40,0.2);border-color:rgba(198,40,40,0.3);color:#EF5350;margin-bottom:1rem;">
+            <i class="fas fa-info-circle"></i> About Us
+        </div>
+        <h1 style="font-family:'Poppins',sans-serif;font-size:3rem;font-weight:900;color:white;margin-bottom:1rem;">
+            Saving Lives Through<br><span style="color:#EF5350;">Community &amp; Technology</span>
+        </h1>
+        <p style="color:rgba(255,255,255,0.6);font-size:1.1rem;max-width:600px;margin:0 auto 2rem;">
+            UAP-BloodConnect is an inter-university blood donation platform connecting UAP students, faculty,
+            and staff to ensure no life is lost to blood shortage within our community.
+        </p>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-user-plus"></i> Join the Community
+            </a>
+            {% endif %}
+            <a href="{% url 'donor_register' %}" class="btn btn-outline-white btn-lg">
+                <i class="fas fa-heart"></i> Become a Donor
+            </a>
+        </div>
+    </div>
+</div>
 
+<!-- Mission & Vision -->
+<div class="grid grid-2" style="gap:1.5rem;margin-bottom:3rem;" data-aos="fade-up">
+    <div class="card card-3d" style="border-top:4px solid var(--crimson);">
+        <div style="width:56px;height:56px;background:#FEF2F2;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">
+            <i class="fas fa-bullseye" style="color:var(--crimson);"></i>
+        </div>
+        <h3 style="font-family:'Poppins',sans-serif;font-weight:800;color:var(--slate-900);margin-bottom:0.75rem;">Our Mission</h3>
+        <p style="color:var(--slate-600);line-height:1.8;">
+            To create a reliable, efficient, and community-driven platform that bridges the gap between blood
+            donors and recipients within the University of Asia Pacific community. We believe no one should
+            suffer due to blood shortages when willing donors are nearby.
+        </p>
+    </div>
+    <div class="card card-3d" style="border-top:4px solid var(--gold-dark);">
+        <div style="width:56px;height:56px;background:#FEFCE8;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">
+            <i class="fas fa-eye" style="color:var(--gold-dark);"></i>
+        </div>
+        <h3 style="font-family:'Poppins',sans-serif;font-weight:800;color:var(--slate-900);margin-bottom:0.75rem;">Our Vision</h3>
+        <p style="color:var(--slate-600);line-height:1.8;">
+            To eliminate preventable deaths due to blood shortages by leveraging technology and community
+            participation — making blood donation accessible, efficient, and rewarding for every member of
+            the UAP community and beyond.
+        </p>
+    </div>
+</div>
+
+<!-- Why UAP-BloodConnect -->
+<div data-aos="fade-up" style="margin-bottom:3rem;">
+    <div class="section-header">
+        <div class="section-tag"><i class="fas fa-star"></i> Our Advantages</div>
+        <h2 class="section-title">Why UAP-BloodConnect?</h2>
+        <p class="section-subtitle">Built specifically for the UAP community with features inspired by the world's best blood donation platforms.</p>
+    </div>
+
+    <div class="grid grid-2" style="gap:1rem;">
+        <div class="why-item" data-aos="fade-up" data-aos-delay="0">
+            <div class="why-icon" style="background:#FEF2F2;color:var(--crimson);"><i class="fas fa-bolt"></i></div>
+            <div>
+                <div class="why-title">Emergency Response</div>
+                <div class="why-desc">Instant connection during critical situations when every second counts. Donors are alerted immediately when a matching blood type is needed.</div>
+            </div>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="100">
+            <div class="why-icon" style="background:#F0FDF4;color:#16A34A;"><i class="fas fa-users"></i></div>
+            <div>
+                <div class="why-title">Verified Community</div>
+                <div class="why-desc">Exclusive to UAP students, faculty and staff — verified with UAP IDs ensuring trust, safety, and genuine community connections.</div>
+            </div>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="200">
+            <div class="why-icon" style="background:#EFF6FF;color:#2563EB;"><i class="fas fa-mobile-alt"></i></div>
+            <div>
+                <div class="why-title">Easy to Use</div>
+                <div class="why-desc">Simple, intuitive interface designed for quick access during emergencies. Find a matching donor in seconds with smart filtering.</div>
+            </div>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="300">
+            <div class="why-icon" style="background:#F5F3FF;color:#7C3AED;"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <div class="why-title">Safety First</div>
+                <div class="why-desc">90-day donation interval enforcement, verified UAP members only, secure communication, and privacy protection built-in.</div>
+            </div>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="400">
+            <div class="why-icon" style="background:#FEFCE8;color:#CA8A04;"><i class="fas fa-trophy"></i></div>
+            <div>
+                <div class="why-title">Achievement System</div>
+                <div class="why-desc">Inspired by global platforms like Red Cross and OneBlood — earn badges and recognition for your life-saving contributions.</div>
+            </div>
+        </div>
+        <div class="why-item" data-aos="fade-up" data-aos-delay="500">
+            <div class="why-icon" style="background:#FFF1F2;color:#BE123C;"><i class="fas fa-bell"></i></div>
+            <div>
+                <div class="why-title">Smart Notifications</div>
+                <div class="why-desc">Real-time notifications when your blood type is needed. Never miss a chance to save a life with instant alerts and response tracking.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safety Features -->
+<div class="card" style="background:linear-gradient(135deg,#0F172A,#1a0a0a);border:none;margin-bottom:3rem;" data-aos="fade-up">
+    <div style="text-align:center;margin-bottom:2rem;">
+        <div class="section-tag" style="background:rgba(198,40,40,0.2);border-color:rgba(198,40,40,0.3);color:#EF5350;margin-bottom:1rem;">
+            <i class="fas fa-shield-alt"></i> Safety
+        </div>
+        <h2 style="font-family:'Poppins',sans-serif;font-weight:800;color:white;font-size:1.75rem;">Built with Safety at the Core</h2>
+    </div>
+    <div class="grid grid-3" style="gap:1rem;">
+        {% for feature in safety_features|default:"" %}
+        <div>...</div>
+        {% empty %}
+        {% for item in "123456"|make_list %}
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:1.25rem;border:1px solid rgba(255,255,255,0.08);">
+            <i class="fas fa-check-circle" style="color:#4ADE80;margin-right:0.5rem;"></i>
+            <span style="color:white;font-weight:600;font-size:0.9rem;">
+                {% if item == "1" %}Verified UAP members only
+                {% elif item == "2" %}90-day donation interval enforced
+                {% elif item == "3" %}Emergency request prioritization
+                {% elif item == "4" %}Location-based donor matching
+                {% elif item == "5" %}Privacy-protected profiles
+                {% elif item == "6" %}Secure file uploads for medical documents
+                {% endif %}
+            </span>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Inspiration -->
+<div class="card" style="margin-bottom:3rem;" data-aos="fade-up">
+    <h2 style="font-family:'Poppins',sans-serif;font-weight:800;text-align:center;color:var(--slate-900);margin-bottom:0.5rem;">
+        <i class="fas fa-globe" style="color:var(--crimson);"></i> Inspired by the World's Best
+    </h2>
+    <p style="text-align:center;color:var(--slate-500);margin-bottom:2rem;">Our platform was designed after researching the top 10 global blood donation platforms.</p>
+    <div class="grid grid-4" style="gap:1rem;text-align:center;">
+        <div style="padding:1rem;border-radius:12px;background:var(--slate-100);">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">🇺🇸</div>
+            <div style="font-weight:700;font-size:0.875rem;color:var(--slate-800);">Red Cross</div>
+            <div style="font-size:0.75rem;color:var(--slate-500);">Donation journey tracking</div>
+        </div>
+        <div style="padding:1rem;border-radius:12px;background:var(--slate-100);">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">🇬🇧</div>
+            <div style="font-weight:700;font-size:0.875rem;color:var(--slate-800);">NHS UK</div>
+            <div style="font-size:0.75rem;color:var(--slate-500);">Eligibility checker & chatbot</div>
+        </div>
+        <div style="padding:1rem;border-radius:12px;background:var(--slate-100);">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">🇨🇦</div>
+            <div style="font-weight:700;font-size:0.875rem;color:var(--slate-800);">Canadian BS</div>
+            <div style="font-size:0.75rem;color:var(--slate-500);">Real-time blood inventory</div>
+        </div>
+        <div style="padding:1rem;border-radius:12px;background:var(--slate-100);">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">🇧🇩</div>
+            <div style="font-weight:700;font-size:0.875rem;color:var(--slate-800);">Rokto.co</div>
+            <div style="font-size:0.75rem;color:var(--slate-500);">Simple search-first design</div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+{% if not user.is_authenticated %}
+<div style="text-align:center;padding:3rem 0;" data-aos="fade-up">
+    <h3 style="font-family:'Poppins',sans-serif;font-size:1.75rem;font-weight:800;color:var(--slate-900);margin-bottom:0.75rem;">
+        Ready to Save Lives?
+    </h3>
+    <p style="color:var(--slate-600);margin-bottom:1.5rem;">Join the UAP-BloodConnect community today and make a real difference.</p>
+    <a href="{% url 'register' %}" class="btn btn-primary btn-lg" style="margin-right:1rem;">
+        <i class="fas fa-user-plus"></i> Create Account
+    </a>
+    <a href="{% url 'eligibility_checker' %}" class="btn btn-ghost btn-lg">
+        <i class="fas fa-clipboard-check"></i> Check Eligibility
+    </a>
+</div>
+{% else %}
+<div style="text-align:center;padding:2rem 0;" data-aos="fade-up">
+    <div class="card" style="display:inline-block;padding:2rem 3rem;border-top:4px solid var(--crimson);">
+        <i class="fas fa-heart" style="font-size:2.5rem;color:var(--crimson);display:block;margin-bottom:0.75rem;"></i>
+        <h3 style="font-family:'Poppins',sans-serif;font-weight:800;color:var(--slate-900);margin-bottom:0.5rem;">
+            Thank you for being part of our community!
+        </h3>
+        <p style="color:var(--slate-600);">Your participation makes a real difference in people's lives.</p>
+        <a href="{% url 'donor_dashboard' %}" class="btn btn-primary" style="margin-top:1rem;">
+            <i class="fas fa-chart-line"></i> Go to Dashboard
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

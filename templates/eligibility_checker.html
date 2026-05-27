@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+{% block title %}Eligibility Checker — UAP-BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.checker-hero {
+    background: linear-gradient(135deg, #0F172A, #1a0a0a);
+    padding: 4rem 2rem;
+    text-align: center;
+    margin: -2rem -2rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.checker-hero::before {
+    content:'';position:absolute;width:600px;height:600px;
+    background:radial-gradient(circle,rgba(198,40,40,0.12) 0%,transparent 70%);
+    top:-200px;left:50%;transform:translateX(-50%);
+}
+
+.quiz-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.quiz-progress {
+    height: 6px;
+    background: var(--slate-200);
+    border-radius: 3px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+.quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--crimson), var(--crimson-light));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.quiz-step { display: none; }
+.quiz-step.active { display: block; animation: fadeInStep 0.4s ease; }
+
+@keyframes fadeInStep {
+    from { opacity:0; transform: translateX(20px); }
+    to { opacity:1; transform: translateX(0); }
+}
+
+.quiz-question {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--slate-900);
+    margin-bottom: 0.5rem;
+}
+.quiz-sub { font-size: 0.9rem; color: var(--slate-500); margin-bottom: 1.5rem; }
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--slate-200);
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.quiz-option:hover { border-color: var(--crimson); background: #FEF2F2; }
+.quiz-option.selected { border-color: var(--crimson); background: #FEF2F2; }
+.quiz-option.selected .option-radio { background: var(--crimson); border-color: var(--crimson); }
+
+.option-radio {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--slate-300);
+    flex-shrink: 0;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+}
+.option-radio::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: white;
+    display: none;
+}
+.quiz-option.selected .option-radio::after { display: block; }
+
+.option-text { font-weight: 600; color: var(--slate-700); }
+.option-sub { font-size: 0.8rem; color: var(--slate-500); }
+
+.result-card {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-top: 1rem;
+    display: none;
+    animation: fadeInStep 0.5s ease;
+}
+.result-card.eligible { background: #F0FDF4; border: 2px solid #86EFAC; }
+.result-card.ineligible { background: #FEF2F2; border: 2px solid #FECACA; }
+.result-card.caution { background: #FFFBEB; border: 2px solid #FDE68A; }
+
+.result-icon { font-size: 4rem; margin-bottom: 1rem; }
+.result-title { font-family:'Poppins',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:0.75rem; }
+
+.criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.criteria-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--slate-200);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.criteria-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.criteria-pass .criteria-icon { background: #F0FDF4; color: #16A34A; }
+.criteria-fail .criteria-icon { background: #FEF2F2; color: #DC2626; }
+
+.criteria-title { font-weight: 700; font-size: 0.875rem; color: var(--slate-800); }
+.criteria-desc { font-size: 0.78rem; color: var(--slate-500); margin-top: 0.2rem; }
+
+@media (max-width: 640px) {
+    .criteria-grid { grid-template-columns: 1fr; }
+    .quiz-card { padding: 1.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checker-hero" data-aos="fade-down">
+    <div style="position:relative;z-index:1;">
+        <div class="section-tag" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white;margin-bottom:1rem;">
+            <i class="fas fa-clipboard-check"></i> Eligibility Checker
+        </div>
+        <h1 style="font-family:'Poppins',sans-serif;font-size:2.5rem;font-weight:900;color:white;margin-bottom:0.5rem;">
+            Can You Donate Blood?
+        </h1>
+        <p style="color:rgba(255,255,255,0.6);max-width:500px;margin:0 auto;">
+            Answer 6 quick questions to check if you're eligible to donate blood today.
+        </p>
+    </div>
+</div>
+
+<div class="quiz-card" data-aos="fade-up">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <span style="font-size:0.82rem;color:var(--slate-500);font-weight:600;" id="step-counter">Question 1 of 6</span>
+        <span style="font-size:0.82rem;color:var(--crimson);font-weight:700;" id="step-pct">0%</span>
+    </div>
+    <div class="quiz-progress">
+        <div class="quiz-progress-fill" id="quiz-progress" style="width:0%"></div>
+    </div>
+
+    <!-- Step 1: Age -->
+    <div class="quiz-step active" id="step-1">
+        <div class="quiz-question">What is your age?</div>
+        <div class="quiz-sub">Donors must be between 17 and 65 years old.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'age', 'pass')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">17 – 65 years old</div><div class="option-sub">I am within the eligible age range</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'age', 'fail')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Under 17 or over 65</div><div class="option-sub">I am outside the standard age range</div></div>
+        </div>
+    </div>
+
+    <!-- Step 2: Weight -->
+    <div class="quiz-step" id="step-2">
+        <div class="quiz-question">Do you weigh at least 50 kg (110 lbs)?</div>
+        <div class="quiz-sub">Minimum weight requirement for safe blood donation.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'weight', 'pass')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Yes, I weigh 50 kg or more</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'weight', 'fail')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">No, I weigh less than 50 kg</div></div>
+        </div>
+    </div>
+
+    <!-- Step 3: Health -->
+    <div class="quiz-step" id="step-3">
+        <div class="quiz-question">Are you in good health today?</div>
+        <div class="quiz-sub">You should feel well and not have a cold, flu, or fever.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'health', 'pass')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Yes, I feel perfectly healthy today</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'health', 'caution')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">I have a mild cold or sore throat</div><div class="option-sub">May need to wait until fully recovered</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'health', 'fail')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">I have a fever or serious illness</div></div>
+        </div>
+    </div>
+
+    <!-- Step 4: Last donation -->
+    <div class="quiz-step" id="step-4">
+        <div class="quiz-question">When was your last blood donation?</div>
+        <div class="quiz-sub">There must be at least 90 days (3 months) between whole blood donations.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'interval', 'pass')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">More than 90 days ago</div><div class="option-sub">Or I have never donated before</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'interval', 'fail')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Less than 90 days ago</div><div class="option-sub">Must wait to complete the 90-day interval</div></div>
+        </div>
+    </div>
+
+    <!-- Step 5: Medications -->
+    <div class="quiz-step" id="step-5">
+        <div class="quiz-question">Are you currently taking blood thinners or antibiotics?</div>
+        <div class="quiz-sub">Certain medications may temporarily prevent you from donating.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'meds', 'pass')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">No, I am not on restricted medications</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'meds', 'caution')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">I take blood pressure or cholesterol medication</div><div class="option-sub">Usually still eligible — confirm with health staff</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'meds', 'fail')">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Yes, I am on blood thinners or antibiotics</div></div>
+        </div>
+    </div>
+
+    <!-- Step 6: Travel/Risk -->
+    <div class="quiz-step" id="step-6">
+        <div class="quiz-question">Have you had any major surgery or illness in the last 6 months?</div>
+        <div class="quiz-sub">Recent surgeries, hospitalizations, or serious illnesses may require a waiting period.</div>
+        <div class="quiz-option" onclick="selectOption(this, 'risk', 'pass', true)">
+            <div class="option-radio"></div>
+            <div><div class="option-text">No major surgery or serious illness</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'risk', 'caution', true)">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Minor procedure (dental, outpatient)</div><div class="option-sub">Likely eligible — recommend consulting a doctor</div></div>
+        </div>
+        <div class="quiz-option" onclick="selectOption(this, 'risk', 'fail', true)">
+            <div class="option-radio"></div>
+            <div><div class="option-text">Yes, major surgery or serious illness</div></div>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div id="quiz-result" style="display:none;margin-top:1.5rem;animation:fadeInStep 0.5s ease;">
+        <div class="result-card eligible" id="result-eligible">
+            <div class="result-icon">✅</div>
+            <div class="result-title" style="color:#166534;">You Appear Eligible to Donate!</div>
+            <p style="color:#166534;margin-bottom:1.5rem;">Based on your answers, you may be able to donate blood today. Register as a donor or visit a donation center to confirm with health staff.</p>
+            <a href="{% url 'donor_register' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-heart"></i> Register as Donor
+            </a>
+            <div style="margin-top:1rem;">
+                <a href="{% url 'request_list' %}" class="btn btn-ghost btn-sm">View Current Requests</a>
+            </div>
+        </div>
+        <div class="result-card ineligible" id="result-ineligible">
+            <div class="result-icon">❌</div>
+            <div class="result-title" style="color:#991B1B;">You May Not Be Eligible Right Now</div>
+            <p style="color:#7F1D1D;margin-bottom:1.5rem;">Based on your answers, you may not be eligible to donate at this time. Check back later or consult with a healthcare professional for more information.</p>
+            <a href="{% url 'blood_type_education' %}" class="btn btn-ghost btn-lg">
+                <i class="fas fa-book-medical"></i> Learn About Blood Types
+            </a>
+        </div>
+        <div class="result-card caution" id="result-caution">
+            <div class="result-icon">⚠️</div>
+            <div class="result-title" style="color:#92400E;">Please Consult Before Donating</div>
+            <p style="color:#78350F;margin-bottom:1.5rem;">Your answers suggest you might be eligible, but we recommend confirming with a healthcare provider or donation center staff before donating.</p>
+            <a href="{% url 'home' %}" class="btn btn-gold btn-lg">
+                <i class="fas fa-phone"></i> Contact Us
+            </a>
+        </div>
+        <div style="margin-top:2rem;">
+            <button onclick="resetQuiz()" class="btn btn-ghost btn-sm">
+                <i class="fas fa-redo"></i> Retake Quiz
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Criteria Info -->
+<div style="max-width:700px;margin:3rem auto 0;" data-aos="fade-up">
+    <h3 style="font-family:'Poppins',sans-serif;font-weight:800;text-align:center;margin-bottom:2rem;color:var(--slate-900);">
+        Donation Eligibility Criteria
+    </h3>
+    <div class="criteria-grid">
+        <div class="criteria-item criteria-pass">
+            <div class="criteria-icon"><i class="fas fa-birthday-cake"></i></div>
+            <div>
+                <div class="criteria-title">Age: 17 – 65 years</div>
+                <div class="criteria-desc">First-time donors should be under 60. Regular donors may be up to 65.</div>
+            </div>
+        </div>
+        <div class="criteria-item criteria-pass">
+            <div class="criteria-icon"><i class="fas fa-weight"></i></div>
+            <div>
+                <div class="criteria-title">Weight: Min 50 kg</div>
+                <div class="criteria-desc">A minimum body weight ensures safe blood volume extraction.</div>
+            </div>
+        </div>
+        <div class="criteria-item criteria-pass">
+            <div class="criteria-icon"><i class="fas fa-heartbeat"></i></div>
+            <div>
+                <div class="criteria-title">Good Health</div>
+                <div class="criteria-desc">No fever, cold, or ongoing illness on the day of donation.</div>
+            </div>
+        </div>
+        <div class="criteria-item criteria-pass">
+            <div class="criteria-icon"><i class="fas fa-calendar-check"></i></div>
+            <div>
+                <div class="criteria-title">90-Day Interval</div>
+                <div class="criteria-desc">At least 3 months between whole blood donations.</div>
+            </div>
+        </div>
+        <div class="criteria-item criteria-fail">
+            <div class="criteria-icon"><i class="fas fa-pills"></i></div>
+            <div>
+                <div class="criteria-title">No Blood Thinners</div>
+                <div class="criteria-desc">Warfarin, aspirin, and similar medications can disqualify you.</div>
+            </div>
+        </div>
+        <div class="criteria-item criteria-fail">
+            <div class="criteria-icon"><i class="fas fa-procedures"></i></div>
+            <div>
+                <div class="criteria-title">No Recent Major Surgery</div>
+                <div class="criteria-desc">Wait at least 6 months after major operations or serious illnesses.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const answers = {};
+let currentStep = 1;
+const totalSteps = 6;
+
+function selectOption(el, key, value, isLast = false) {
+    const parent = el.closest('.quiz-step');
+    parent.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answers[key] = value;
+
+    setTimeout(() => {
+        if (isLast) {
+            showResult();
+        } else {
+            nextStep();
+        }
+    }, 350);
+}
+
+function nextStep() {
+    if (currentStep < totalSteps) {
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        currentStep++;
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        updateProgress();
+    }
+}
+
+function updateProgress() {
+    const pct = Math.round(((currentStep - 1) / totalSteps) * 100);
+    document.getElementById('quiz-progress').style.width = pct + '%';
+    document.getElementById('step-counter').textContent = `Question ${currentStep} of ${totalSteps}`;
+    document.getElementById('step-pct').textContent = pct + '%';
+}
+
+function showResult() {
+    // Hide all steps
+    for (let i = 1; i <= totalSteps; i++) {
+        const s = document.getElementById(`step-${i}`);
+        if (s) s.classList.remove('active');
+    }
+    document.getElementById('quiz-progress').style.width = '100%';
+    document.getElementById('step-pct').textContent = '100%';
+    document.getElementById('step-counter').textContent = 'Results';
+    document.getElementById('quiz-result').style.display = 'block';
+
+    const vals = Object.values(answers);
+    const hasFail = vals.includes('fail');
+    const hasCaution = vals.includes('caution');
+
+    document.getElementById('result-eligible').style.display = 'none';
+    document.getElementById('result-ineligible').style.display = 'none';
+    document.getElementById('result-caution').style.display = 'none';
+
+    if (hasFail) {
+        document.getElementById('result-ineligible').style.display = 'block';
+    } else if (hasCaution) {
+        document.getElementById('result-caution').style.display = 'block';
+    } else {
+        document.getElementById('result-eligible').style.display = 'block';
+    }
+}
+
+function resetQuiz() {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    currentStep = 1;
+    for (let i = 1; i <= totalSteps; i++) {
+        const s = document.getElementById(`step-${i}`);
+        if (s) {
+            s.classList.remove('active');
+            s.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        }
+    }
+    document.getElementById('step-1').classList.add('active');
+    document.getElementById('quiz-result').style.display = 'none';
+    document.getElementById('quiz-progress').style.width = '0%';
+    document.getElementById('step-pct').textContent = '0%';
+    document.getElementById('step-counter').textContent = 'Question 1 of 6';
+}
+</script>
+{% endblock %}

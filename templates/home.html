@@ -1,142 +1,1321 @@
 {% extends 'base.html' %}
+{% load blood_filters %}
+{% block title %}UAP-BloodConnect — Save Lives, Donate Blood{% endblock %}
+{% block emergency_bar %}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════
+   GLOBAL RESETS FOR HOME
+══════════════════════════════════════════ */
+body { background: #080e1a; }
 
-{% block title %}Home - UAP-BloodConnect{% endblock %}
+.section-tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(198,40,40,0.12);
+  border: 1px solid rgba(198,40,40,0.3);
+  border-radius: 100px;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem; font-weight: 700;
+  color: #ef5350; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 1rem;
+}
 
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  position: relative; overflow: hidden;
+  margin-top: -68px; padding-top: 68px;
+  background: radial-gradient(ellipse at 70% 50%, #1a0a0a 0%, #080e1a 60%);
+}
 
-{% block content %}
-<div class="hero-section">
-   <h1 class="hero-title">Save Lives, Donate Blood</h1>
-   <p class="hero-subtitle">Connecting UAP community members for emergency blood donations. Together, we can make a difference.</p>
-   <div style="margin-bottom: 2rem;">
-       {% if user.is_authenticated %}
-           <a href="{% url 'create_request' %}" class="btn btn-primary" style="margin-right: 1rem;">
-               🩺 Request Blood
-           </a>
-           {% if not user.donor %}
-               <a href="{% url 'donor_register' %}" class="btn btn-secondary">
-                   💪 Become a Donor
-               </a>
-           {% else %}
-               <a href="{% url 'donor_dashboard' %}" class="btn btn-secondary">
-                   📊 My Dashboard
-               </a>
-           {% endif %}
-       {% else %}
-           <a href="{% url 'register' %}" class="btn btn-primary" style="margin-right: 1rem;">
-               Join Our Community
-           </a>
-           <a href="{% url 'login' %}" class="btn btn-secondary">
-               Sign In
-           </a>
-       {% endif %}
-   </div>
-</div>
+#hero-canvas {
+  position: absolute;
+  top: 0; right: 0;
+  width: 55%; height: 100%;
+  pointer-events: none; z-index: 1;
+}
+@media (max-width: 900px) { #hero-canvas { display: none; } }
 
+.hero-content {
+  max-width: 1280px; margin: 0 auto;
+  padding: 5rem 2rem; width: 100%;
+  position: relative; z-index: 2;
+}
 
-<div class="stats-container">
-   <div class="stat-item">
-       <span class="stat-number">{{ total_donors }}</span>
-       <span class="stat-label">Registered Donors</span>
-   </div>
-   <div class="stat-item">
-       <span class="stat-number">{{ active_requests }}</span>
-       <span class="stat-label">Active Requests</span>
-   </div>
-   <div class="stat-item">
-       <span class="stat-number">{{ blood_groups|length }}</span>
-       <span class="stat-label">Blood Groups</span>
-   </div>
-   <div class="stat-item">
-       <span class="stat-number">24/7</span>
-       <span class="stat-label">Emergency Support</span>
-   </div>
-</div>
+.hero-left { max-width: 580px; }
 
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  background: rgba(198,40,40,0.1);
+  border: 1px solid rgba(198,40,40,0.35);
+  border-radius: 100px; padding: 0.45rem 1.1rem;
+  font-size: 0.78rem; font-weight: 700;
+  color: #ef5350; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 2rem;
+}
+.hero-pill .pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ef5350;
+  animation: pdot 1.5s ease-in-out infinite;
+}
+@keyframes pdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
 
-<div class="grid grid-cols-1 md:grid-cols-3" style="margin-top: 3rem; gap: 2rem;">
-   <div class="card">
-       <div style="text-align: center; margin-bottom: 1.5rem;">
-           <div style="font-size: 3rem;">🩸</div>
-       </div>
-       <h3 style="text-align: center; margin-bottom: 1rem; color: var(--primary-red);">Quick Response</h3>
-       <p style="text-align: center;">Instant connection between blood donors and recipients within the UAP community during emergencies. Every second counts when saving lives.</p>
-   </div>
+.hero-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(2.8rem, 5.5vw, 4.5rem);
+  font-weight: 900; color: #fff;
+  line-height: 1.08; letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+}
+.hero-title .word-red {
+  background: linear-gradient(135deg, #ff6b6b, #c62828, #ff8a80);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
+.hero-subtitle {
+  font-size: 1.08rem; color: rgba(255,255,255,0.55);
+  line-height: 1.8; max-width: 480px; margin-bottom: 2.5rem;
+}
 
-   <div class="card">
-       <div style="text-align: center; margin-bottom: 1.5rem;">
-           <div style="font-size: 3rem;">🏆</div>
-       </div>
-       <h3 style="text-align: center; margin-bottom: 1rem; color: var(--secondary-blue);">Achievement System</h3>
-       <p style="text-align: center;">Earn badges and recognition for your life-saving contributions. Track your donations and milestones as you help save lives.</p>
-   </div>
+.hero-actions {
+  display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 3.5rem;
+}
+.btn-hero-primary {
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  background: linear-gradient(135deg, #c62828, #8b0000);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 0.9rem 1.8rem; font-size: 0.95rem; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 4px 30px rgba(198,40,40,0.4);
+  transition: all 0.25s ease; letter-spacing: 0.01em;
+  font-family: 'Inter', sans-serif;
+}
+.btn-hero-primary:hover {
+  transform: translateY(-3px); box-shadow: 0 10px 40px rgba(198,40,40,0.5);
+  color: #fff; text-decoration: none;
+}
+.btn-hero-ghost {
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);
+  border-radius: 12px; padding: 0.9rem 1.8rem;
+  font-size: 0.95rem; font-weight: 600;
+  text-decoration: none; transition: all 0.25s ease;
+  backdrop-filter: blur(10px); font-family: 'Inter', sans-serif;
+}
+.btn-hero-ghost:hover {
+  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.35);
+  color: #fff; transform: translateY(-2px); text-decoration: none;
+}
 
+.hero-stats {
+  display: flex; gap: 0; flex-wrap: wrap;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px; overflow: hidden;
+  backdrop-filter: blur(10px);
+  display: inline-flex;
+}
+.hero-stat {
+  padding: 1.1rem 1.8rem; text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.hero-stat:last-child { border-right: none; }
+.h-stat-num {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.8rem; font-weight: 900; color: #fff;
+  line-height: 1; display: block;
+}
+.h-stat-num .sfx { color: #ef5350; }
+.h-stat-lbl {
+  font-size: 0.7rem; color: rgba(255,255,255,0.4);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.2rem;
+}
 
-   <div class="card">
-       <div style="text-align: center; margin-bottom: 1.5rem;">
-           <div style="font-size: 3rem;">🔒</div>
-       </div>
-       <h3 style="text-align: center; margin-bottom: 1rem; color: var(--primary-red);">Verified Community</h3>
-       <p style="text-align: center;">All members are verified UAP students and faculty, ensuring trust and safety. Your privacy and security are our top priorities.</p>
-   </div>
-</div>
+/* ══════════════════════════════════════════
+   SCROLL TICKER
+══════════════════════════════════════════ */
+.ticker-wrap {
+  background: #c62828; overflow: hidden; padding: 0.7rem 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.ticker-inner {
+  display: flex; gap: 0; width: max-content;
+  animation: ticker 28s linear infinite;
+}
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  white-space: nowrap; padding: 0 2.5rem;
+  font-size: 0.78rem; font-weight: 700;
+  color: rgba(255,255,255,0.9); letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ticker-item .ticker-dot { width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.5); }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+/* ══════════════════════════════════════════
+   BLOOD INVENTORY
+══════════════════════════════════════════ */
+.inventory-section {
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #080e1a 0%, #0d1525 100%);
+}
+.inv-tubes {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 1.25rem;
+  margin-top: 3rem;
+}
+@media (max-width:900px) { .inv-tubes { grid-template-columns: repeat(4,1fr); } }
+@media (max-width:500px) { .inv-tubes { grid-template-columns: repeat(4,1fr); gap:0.6rem; } }
 
-<div class="card" style="margin-top: 3rem;">
-   <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">Available Blood Groups</h2>
-   <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-       {% for blood_group in blood_groups %}
-       <div style="text-align: center; padding: 1rem;">
-           {% if blood_group.blood_type == "A+" %}
-               <span class="blood-badge blood-a-plus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "A-" %}
-               <span class="blood-badge blood-a-minus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "B+" %}
-               <span class="blood-badge blood-b-plus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "B-" %}
-               <span class="blood-badge blood-b-minus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "O+" %}
-               <span class="blood-badge blood-o-plus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "O-" %}
-               <span class="blood-badge blood-o-minus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "AB+" %}
-               <span class="blood-badge blood-ab-plus">{{ blood_group.blood_type }}</span>
-           {% elif blood_group.blood_type == "AB-" %}
-               <span class="blood-badge blood-ab-minus">{{ blood_group.blood_type }}</span>
-           {% else %}
-               <span class="blood-badge">{{ blood_group.blood_type }}</span>
-           {% endif %}
-       </div>
-       {% endfor %}
-   </div>
-</div>
+.inv-tube-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+  transition: transform 0.3s ease;
+}
+.inv-tube-wrap:hover { transform: translateY(-6px); }
 
+.inv-tube {
+  width: 54px; height: 160px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 27px 27px 8px 8px;
+  position: relative; overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+}
+.inv-tube-fill {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(180deg, rgba(198,40,40,0.7) 0%, #8b0000 100%);
+  border-radius: 0 0 6px 6px;
+  transition: height 1.8s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 -4px 20px rgba(198,40,40,0.4);
+}
+.inv-tube-fill::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%; filter: blur(2px);
+}
+.inv-tube::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 50%);
+  pointer-events: none; z-index: 1; border-radius: inherit;
+}
+.inv-type {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.15rem; font-weight: 900; color: #fff;
+}
+.inv-count {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.4rem; font-weight: 900; color: var(--crimson-light);
+  line-height: 1;
+}
+.inv-lbl {
+  font-size: 0.68rem; color: rgba(255,255,255,0.35);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
 
-<div class="card" style="margin-top: 2rem;">
-   <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">How It Works</h2>
-   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-       <div style="text-align: center; padding: 1.5rem;">
-           <div style="font-size: 2.5rem; margin-bottom: 1rem;">1️⃣</div>
-           <h4 style="color: var(--primary-red);">Register</h4>
-           <p>UAP members register with verified credentials as donors or requesters</p>
-       </div>
-       <div style="text-align: center; padding: 1.5rem;">
-           <div style="font-size: 2.5rem; margin-bottom: 1rem;">2️⃣</div>
-           <h4 style="color: var(--primary-red);">Request</h4>
-           <p>Create blood requests with urgency levels and location details</p>
-       </div>
-       <div style="text-align: center; padding: 1.5rem;">
-           <div style="font-size: 2.5rem; margin-bottom: 1rem;">3️⃣</div>
-           <h4 style="color: var(--primary-red);">Connect</h4>
-           <p>Automated matching connects compatible donors with blood requests</p>
-       </div>
-       <div style="text-align: center; padding: 1.5rem;">
-           <div style="font-size: 2.5rem; margin-bottom: 1rem;">4️⃣</div>
-           <h4 style="color: var(--primary-red);">Save Lives</h4>
-           <p>Quick response system ensures timely blood donation when needed most</p>
-       </div>
-   </div>
-</div>
+/* ══════════════════════════════════════════
+   HOW IT WORKS
+══════════════════════════════════════════ */
+.hiw-section {
+  padding: 5rem 0;
+  background: #0d1525;
+  position: relative; overflow: hidden;
+}
+.hiw-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(198,40,40,0.07) 0%, transparent 65%);
+}
+.hiw-steps {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 0;
+  position: relative; margin-top: 3.5rem;
+}
+@media (max-width:768px) { .hiw-steps { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+@media (max-width:480px) { .hiw-steps { grid-template-columns: 1fr; } }
+
+.hiw-connector {
+  position: absolute; top: 42px; left: 12.5%; right: 12.5%; height: 2px;
+  background: linear-gradient(90deg, #c62828, rgba(198,40,40,0.2));
+  z-index: 0;
+}
+@media (max-width:768px) { .hiw-connector { display: none; } }
+
+.hiw-step {
+  text-align: center; position: relative; z-index: 1;
+  padding: 0 1.5rem;
+}
+.hiw-num {
+  width: 84px; height: 84px; border-radius: 50%;
+  background: linear-gradient(135deg, #c62828, #8b0000);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.6rem; font-weight: 900; color: #fff;
+  box-shadow: 0 0 0 8px rgba(198,40,40,0.1), 0 0 0 16px rgba(198,40,40,0.05),
+              0 8px 30px rgba(198,40,40,0.4);
+  transition: transform 0.3s ease;
+}
+.hiw-step:hover .hiw-num { transform: scale(1.1); }
+.hiw-step-title {
+  font-family: 'Poppins', sans-serif; font-size: 1.05rem;
+  font-weight: 700; color: #fff; margin-bottom: 0.6rem;
+}
+.hiw-step-desc { font-size: 0.86rem; color: rgba(255,255,255,0.45); line-height: 1.7; }
+
+/* ══════════════════════════════════════════
+   3D FEATURE CARDS
+══════════════════════════════════════════ */
+.features-section {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #080e1a 0%, #0d1525 100%);
+  position: relative; overflow: hidden;
+}
+.features-section::before {
+  content: '';
+  position: absolute; width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(198,40,40,0.06) 0%, transparent 70%);
+  top: -250px; right: -250px; pointer-events: none;
+}
+.features-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem;
+  margin-top: 3rem;
+}
+@media (max-width:768px) { .features-grid { grid-template-columns: 1fr; } }
+
+.feat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px; padding: 2.25rem;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.feat-card:hover {
+  border-color: rgba(198,40,40,0.3);
+  box-shadow: 0 20px 60px rgba(198,40,40,0.12);
+}
+.feat-icon-wrap {
+  width: 64px; height: 64px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.5rem; font-size: 1.6rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.feat-card:hover .feat-icon-wrap { transform: translateZ(20px) scale(1.05); }
+.feat-title {
+  font-family: 'Poppins', sans-serif; font-size: 1.05rem;
+  font-weight: 700; color: #fff; margin-bottom: 0.65rem;
+}
+.feat-desc { font-size: 0.875rem; color: rgba(255,255,255,0.48); line-height: 1.75; }
+
+/* ══════════════════════════════════════════
+   IMPACT COUNTER
+══════════════════════════════════════════ */
+.impact-section {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #7f0000 0%, #c62828 40%, #8b0000 100%);
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+.impact-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0 L45 15 L60 15 L48 25 L52 40 L40 30 L28 40 L32 25 L20 15 L35 15 Z' fill='rgba(255,255,255,0.02)'/%3E%3C/svg%3E");
+}
+.impact-section::after {
+  content: '';
+  position: absolute; width: 500px; height: 500px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50%; top: -200px; right: -200px;
+}
+.impact-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem;
+  position: relative; z-index: 1;
+}
+@media (max-width:768px) { .impact-grid { grid-template-columns: repeat(2,1fr); } }
+.impact-item {
+  padding: 2rem 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  transition: transform 0.3s ease;
+}
+.impact-item:hover { transform: translateY(-6px); }
+.impact-num {
+  font-family: 'Poppins', sans-serif; font-size: 3rem; font-weight: 900;
+  color: #fff; display: block; line-height: 1;
+}
+.impact-lbl {
+  font-size: 0.82rem; color: rgba(255,255,255,0.7);
+  margin-top: 0.4rem; letter-spacing: 0.04em;
+}
+
+/* ══════════════════════════════════════════
+   LEADERBOARD + URGENT
+══════════════════════════════════════════ */
+.lb-urgent-section {
+  padding: 5rem 0;
+  background: #0d1525;
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+@media (max-width:900px) { .two-col { grid-template-columns: 1fr; } }
+
+.lb-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px; margin-bottom: 0.7rem;
+  transition: all 0.25s ease;
+}
+.lb-item:hover {
+  background: rgba(198,40,40,0.07);
+  border-color: rgba(198,40,40,0.2);
+  transform: translateX(5px);
+}
+.lb-rank {
+  font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 900;
+  width: 32px; text-align: center; flex-shrink: 0;
+}
+.lb-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+.lb-name { font-weight: 700; color: #fff; font-size: 0.9rem; }
+.lb-meta { font-size: 0.77rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem; }
+.lb-count {
+  font-family: 'Poppins', sans-serif; font-size: 1.3rem;
+  font-weight: 900; color: var(--crimson-light);
+}
+.lb-unit { font-size: 0.68rem; color: rgba(255,255,255,0.3); display: block; text-align: center; }
+
+.urgent-card {
+  background: rgba(198,40,40,0.05);
+  border: 1px solid rgba(198,40,40,0.2);
+  border-radius: 16px; padding: 1.25rem 1.5rem;
+  margin-bottom: 0.7rem;
+  transition: all 0.25s ease;
+  animation: urgentPulse 3s ease-in-out infinite;
+}
+.urgent-card:hover {
+  background: rgba(198,40,40,0.1); transform: translateX(5px);
+  animation: none;
+}
+@keyframes urgentPulse {
+  0%,100% { border-color: rgba(198,40,40,0.2); }
+  50%      { border-color: rgba(198,40,40,0.45); }
+}
+
+/* ══════════════════════════════════════════
+   BLOOD TYPE GUIDE
+══════════════════════════════════════════ */
+.compat-section {
+  padding: 5rem 0;
+  background: linear-gradient(180deg, #0d1525 0%, #080e1a 100%);
+}
+.compat-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1.1rem; margin-top: 3rem;
+}
+@media (max-width:768px) { .compat-grid { grid-template-columns: repeat(2,1fr); } }
+.compat-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px; padding: 1.5rem;
+  text-align: center; transition: all 0.3s ease;
+}
+.compat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(198,40,40,0.3);
+  box-shadow: 0 16px 48px rgba(198,40,40,0.12);
+}
+.compat-type {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem; font-weight: 900; margin-bottom: 0.3rem;
+}
+.compat-badge {
+  display: inline-block; padding: 0.2rem 0.65rem;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  margin-bottom: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.compat-detail { font-size: 0.78rem; color: rgba(255,255,255,0.4); line-height: 1.6; }
+
+/* ══════════════════════════════════════════
+   TESTIMONIALS
+══════════════════════════════════════════ */
+.stories-section {
+  padding: 5rem 0; background: #0d1525;
+}
+.story-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px; padding: 2rem;
+  transition: all 0.3s ease; height: 100%;
+}
+.story-card:hover {
+  border-color: rgba(198,40,40,0.25);
+  box-shadow: 0 20px 60px rgba(198,40,40,0.08);
+  transform: translateY(-5px);
+}
+.story-stars { color: #fbbf24; margin-bottom: 1rem; font-size: 0.95rem; letter-spacing: 0.1em; }
+.story-quote {
+  font-size: 0.95rem; font-style: italic;
+  color: rgba(255,255,255,0.65); line-height: 1.75; margin-bottom: 1.5rem;
+}
+.story-author { display: flex; align-items: center; gap: 0.85rem; }
+.story-av {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.story-name { font-weight: 700; color: #fff; font-size: 0.9rem; }
+.story-role { font-size: 0.76rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem; }
+
+/* ══════════════════════════════════════════
+   CTA
+══════════════════════════════════════════ */
+.cta-section {
+  padding: 7rem 2rem; text-align: center;
+  background: linear-gradient(160deg, #0d0d0d 0%, #1a0000 50%, #0d0d0d 100%);
+  position: relative; overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(198,40,40,0.2) 0%, transparent 65%);
+}
+.cta-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900; color: #fff; margin-bottom: 1rem; position: relative; z-index: 1;
+}
+.cta-title .cta-red { color: #ef5350; }
+
+/* ══════════════════════════════════════════
+   SECTION HEADERS
+══════════════════════════════════════════ */
+.sh { text-align: center; }
+.sh-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800; color: #fff; margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+.sh-sub {
+  font-size: 1rem; color: rgba(255,255,255,0.45);
+  max-width: 560px; margin: 0 auto; line-height: 1.75;
+}
+.sh-left { text-align: left; }
+.sh-left .sh-sub { margin: 0; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE GRID HELPERS
+══════════════════════════════════════════ */
+.grid-3 {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem;
+}
+@media (max-width:768px) { .grid-3 { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════════
+   SECTION LINK BUTTONS
+══════════════════════════════════════════ */
+.btn-section {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  border-radius: 10px; padding: 0.65rem 1.35rem;
+  font-size: 0.88rem; font-weight: 600;
+  text-decoration: none; transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.btn-section-primary {
+  background: linear-gradient(135deg, #c62828, #8b0000);
+  color: #fff; box-shadow: 0 3px 14px rgba(198,40,40,0.3);
+}
+.btn-section-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(198,40,40,0.4); color:#fff; text-decoration:none; }
+.btn-section-ghost {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+}
+.btn-section-ghost:hover { background: rgba(255,255,255,0.09); color:#fff; text-decoration:none; }
+</style>
 {% endblock %}
 
+{% block content %}
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+
+  <div class="hero-content">
+    <div class="hero-left" data-aos="fade-right" data-aos-duration="900">
+      <div class="hero-pill">
+        <span class="pulse-dot"></span>
+        UAP Campus &mdash; Live Blood Network
+      </div>
+
+      <h1 class="hero-title">
+        Every Drop<br>
+        <span class="word-red">Saves a Life.</span><br>
+        Be the Hero.
+      </h1>
+
+      <p class="hero-subtitle">
+        UAP-BloodConnect connects verified students and faculty for emergency blood donations.
+        Instant matching. Real-time alerts. Lives saved — by you.
+      </p>
+
+      <div class="hero-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'create_request' %}" class="btn-hero-primary">
+            <i class="fas fa-hand-holding-medical"></i> Request Blood
+          </a>
+          {% if not user.donor %}
+            <a href="{% url 'donor_register' %}" class="btn-hero-ghost">
+              <i class="fas fa-heart"></i> Become a Donor
+            </a>
+          {% else %}
+            <a href="{% url 'donor_dashboard' %}" class="btn-hero-ghost">
+              <i class="fas fa-chart-line"></i> My Dashboard
+            </a>
+          {% endif %}
+        {% else %}
+          <a href="{% url 'register' %}" class="btn-hero-primary">
+            <i class="fas fa-heart"></i> Join Free
+          </a>
+          <a href="{% url 'eligibility_checker' %}" class="btn-hero-ghost">
+            <i class="fas fa-clipboard-check"></i> Am I Eligible?
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="h-stat-num" data-count="{{ total_donors }}">0</span>
+          <div class="h-stat-lbl">Donors</div>
+        </div>
+        <div class="hero-stat">
+          <span class="h-stat-num" data-count="{{ total_donations }}">0</span>
+          <div class="h-stat-lbl">Donations</div>
+        </div>
+        <div class="hero-stat">
+          <span class="h-stat-num" data-count="{{ active_requests }}">0</span>
+          <div class="h-stat-lbl">Active Requests</div>
+        </div>
+        <div class="hero-stat">
+          <span class="h-stat-num">24<span class="sfx">/7</span></span>
+          <div class="h-stat-lbl">Emergency</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Scroll Ticker -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    {% for _ in "123456" %}
+    <span class="ticker-item"><span class="ticker-dot"></span> Donate Blood</span>
+    <span class="ticker-item"><span class="ticker-dot"></span> Save Lives</span>
+    <span class="ticker-item"><span class="ticker-dot"></span> UAP BloodConnect</span>
+    <span class="ticker-item"><span class="ticker-dot"></span> Emergency Response 24/7</span>
+    <span class="ticker-item"><span class="ticker-dot"></span> {{ total_donors }}+ Verified Donors</span>
+    <span class="ticker-item"><span class="ticker-dot"></span> Be the Hero</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     BLOOD INVENTORY
+════════════════════════════════════════ -->
+<section class="inventory-section">
+  <div class="container">
+    <div class="sh" data-aos="fade-up">
+      <div class="section-tag"><i class="fas fa-tint"></i> Live Inventory</div>
+      <h2 class="sh-title">Available Donors by Blood Type</h2>
+      <p class="sh-sub">Real-time count of available donors in the UAP community. Updated continuously.</p>
+    </div>
+
+    <div class="inv-tubes" data-aos="fade-up" data-aos-delay="100">
+      {% for item in blood_inventory %}
+      <div class="inv-tube-wrap">
+        <div class="inv-count" data-count="{{ item.count }}">0</div>
+        <div class="inv-tube">
+          <div class="inv-tube-fill" data-pct="{% widthratio item.count max_donors 90 %}" style="height:0%;"></div>
+        </div>
+        <div class="inv-type">{{ item.blood_type }}</div>
+        <div class="inv-lbl">donors</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div style="text-align:center; margin-top:2.5rem;" data-aos="fade-up">
+      <a href="{% url 'donor_directory' %}" class="btn-section btn-section-ghost" style="margin-right:0.75rem;">
+        <i class="fas fa-search"></i> Find Donors
+      </a>
+      <a href="{% url 'donor_register' %}" class="btn-section btn-section-primary">
+        <i class="fas fa-user-plus"></i> Register as Donor
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════ -->
+<section class="hiw-section">
+  <div class="container">
+    <div class="sh" data-aos="fade-up">
+      <div class="section-tag"><i class="fas fa-route"></i> Process</div>
+      <h2 class="sh-title">How It Works</h2>
+      <p class="sh-sub">Four simple steps to connect donors with recipients in minutes.</p>
+    </div>
+
+    <div class="hiw-steps" data-aos="fade-up" data-aos-delay="80">
+      <div class="hiw-connector"></div>
+      <div class="hiw-step">
+        <div class="hiw-num">1</div>
+        <div class="hiw-step-title">Register</div>
+        <div class="hiw-step-desc">Sign up with your UAP ID. Verify your identity and select your blood type and location.</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">2</div>
+        <div class="hiw-step-title">Request</div>
+        <div class="hiw-step-desc">Post a blood request with urgency level, blood group, hospital, and deadline.</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">3</div>
+        <div class="hiw-step-title">Match</div>
+        <div class="hiw-step-desc">Compatible donors get instant notifications. They respond with availability in real time.</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">4</div>
+        <div class="hiw-step-title">Save Lives</div>
+        <div class="hiw-step-desc">Donor goes to the hospital, donates, logs it, and earns achievement badges. A life is saved.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     3D FEATURE CARDS
+════════════════════════════════════════ -->
+<section class="features-section">
+  <div class="container">
+    <div class="sh" data-aos="fade-up">
+      <div class="section-tag"><i class="fas fa-star"></i> Platform Features</div>
+      <h2 class="sh-title">Everything You Need to Save Lives</h2>
+      <p class="sh-sub">Built with inspiration from NHS, Red Cross, and Canadian Blood Services.</p>
+    </div>
+
+    <div class="features-grid" data-aos="fade-up" data-aos-delay="80">
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2);">
+          <i class="fas fa-bolt" style="color:#ef4444;"></i>
+        </div>
+        <div class="feat-title">Emergency Matching</div>
+        <div class="feat-desc">Critical requests are instantly matched with compatible available donors — sorted by blood type and location.</div>
+      </div>
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.2);">
+          <i class="fas fa-trophy" style="color:#fbbf24;"></i>
+        </div>
+        <div class="feat-title">Achievement System</div>
+        <div class="feat-desc">Earn Bronze, Silver, Gold, Platinum, and Hero badges as you hit donation milestones. Show off your impact.</div>
+      </div>
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.2);">
+          <i class="fas fa-shield-alt" style="color:#4ade80;"></i>
+        </div>
+        <div class="feat-title">Verified Community</div>
+        <div class="feat-desc">All members are verified UAP students and faculty — a closed, safe environment for blood donation.</div>
+      </div>
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.2);">
+          <i class="fas fa-bell" style="color:#60a5fa;"></i>
+        </div>
+        <div class="feat-title">Smart Notifications</div>
+        <div class="feat-desc">Get notified the moment a blood request matching your type is posted. Never miss a chance to help.</div>
+      </div>
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(244,114,182,0.12);border:1px solid rgba(244,114,182,0.2);">
+          <i class="fas fa-chart-bar" style="color:#f472b6;"></i>
+        </div>
+        <div class="feat-title">Donation Tracking</div>
+        <div class="feat-desc">Log every donation with dates, hospitals, and certificates. Get auto-notified when you're eligible again.</div>
+      </div>
+
+      <div class="feat-card tilt-card">
+        <div class="feat-icon-wrap" style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.2);">
+          <i class="fas fa-users" style="color:#a78bfa;"></i>
+        </div>
+        <div class="feat-title">Live Leaderboard</div>
+        <div class="feat-desc">Compete with fellow donors. The most lives saved earns the title of UAP Blood Hero.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     IMPACT
+════════════════════════════════════════ -->
+<section class="impact-section">
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="sh" data-aos="fade-up" style="margin-bottom:3rem;">
+      <div class="section-tag" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25);color:#fff;">
+        <i class="fas fa-heart"></i> Our Impact
+      </div>
+      <h2 class="sh-title">Numbers That Matter</h2>
+    </div>
+    <div class="impact-grid" data-aos="fade-up" data-aos-delay="100">
+      <div class="impact-item">
+        <span class="impact-num" data-count="{{ total_donors }}">0</span>
+        <div class="impact-lbl">Registered Donors</div>
+      </div>
+      <div class="impact-item">
+        <span class="impact-num" data-count="{{ total_donations }}">0</span>
+        <div class="impact-lbl">Successful Donations</div>
+      </div>
+      <div class="impact-item">
+        <span class="impact-num" data-count="{{ fulfilled_requests }}">0</span>
+        <div class="impact-lbl">Requests Fulfilled</div>
+      </div>
+      <div class="impact-item">
+        <span class="impact-num">{{ lives_saved }}<span style="font-size:2rem;">+</span></span>
+        <div class="impact-lbl">Estimated Lives Saved</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     LEADERBOARD + URGENT REQUESTS
+════════════════════════════════════════ -->
+<section class="lb-urgent-section">
+  <div class="container">
+    <div class="two-col">
+
+      <!-- Leaderboard -->
+      <div data-aos="fade-right">
+        <div class="sh-left sh" style="margin-bottom:2rem;">
+          <div class="section-tag"><i class="fas fa-trophy"></i> Top Donors</div>
+          <h2 class="sh-title" style="font-size:1.9rem; text-align:left;">Community Heroes</h2>
+          <p class="sh-sub" style="margin:0; text-align:left;">Our most dedicated donors who keep giving.</p>
+        </div>
+
+        {% for donor in top_donors %}
+        <div class="lb-item">
+          <div class="lb-rank">
+            {% if forloop.counter == 1 %}🥇
+            {% elif forloop.counter == 2 %}🥈
+            {% elif forloop.counter == 3 %}🥉
+            {% else %}<span style="color:rgba(255,255,255,0.35); font-size:0.9rem;">#{{ forloop.counter }}</span>
+            {% endif %}
+          </div>
+          <div class="lb-avatar">{{ donor.user.username|first|upper }}</div>
+          <div style="flex:1;">
+            <div class="lb-name">{{ donor.user.get_full_name|default:donor.user.username }}</div>
+            <div class="lb-meta">
+              <span class="blood-badge blood-{{ donor.blood_group.blood_type|blood_css }}" style="font-size:0.7rem;">{{ donor.blood_group.blood_type }}</span>
+              &nbsp;{{ donor.get_location_display }}
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <div class="lb-count">{{ donor.total_donations }}</div>
+            <div class="lb-unit">Donations</div>
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center; padding:2.5rem; color:rgba(255,255,255,0.3);">
+          <i class="fas fa-trophy" style="font-size:2.5rem; display:block; margin-bottom:0.75rem;"></i>
+          <p>Be the first donor — claim the #1 spot!</p>
+          <a href="{% url 'donor_register' %}" class="btn-section btn-section-primary" style="margin-top:1rem;">Register Now</a>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:1.25rem;">
+          <a href="{% url 'leaderboard' %}" class="btn-section btn-section-ghost">
+            <i class="fas fa-list-ol"></i> Full Leaderboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Urgent Requests -->
+      <div data-aos="fade-left">
+        <div class="sh-left sh" style="margin-bottom:2rem;">
+          <div class="section-tag" style="background:rgba(198,40,40,0.12);border-color:rgba(198,40,40,0.3);color:#ef5350;">
+            <i class="fas fa-exclamation-triangle"></i> Urgent
+          </div>
+          <h2 class="sh-title" style="font-size:1.9rem; text-align:left;">Emergency Requests</h2>
+          <p class="sh-sub" style="margin:0; text-align:left;">These need a compatible donor right now.</p>
+        </div>
+
+        {% for req in urgent_requests %}
+        <div class="urgent-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <span class="blood-badge blood-{{ req.blood_group.blood_type|blood_css }}">{{ req.blood_group.blood_type }}</span>
+              <span style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:0.15rem 0.55rem;border-radius:20px;font-size:0.72rem;font-weight:700;">
+                {% if req.urgency == 'critical' %}<i class="fas fa-exclamation-circle"></i>&nbsp;{% endif %}
+                {{ req.get_urgency_display }}
+              </span>
+            </div>
+            <span style="font-size:0.73rem; color:rgba(255,255,255,0.35);">{{ req.created_at|timesince }} ago</span>
+          </div>
+          <div style="font-weight:700; color:#fff; margin-bottom:0.3rem;">{{ req.patient_name }}</div>
+          <div style="font-size:0.82rem; color:rgba(255,255,255,0.45);">
+            <i class="fas fa-map-marker-alt" style="color:var(--crimson-light);"></i> {{ req.get_location_display }}
+            &nbsp;&bull;&nbsp;
+            <i class="fas fa-tint"></i> {{ req.units_required }} units
+          </div>
+          <div style="margin-top:0.9rem;">
+            <a href="{% url 'request_detail' req.id %}" class="btn-section btn-section-primary" style="font-size:0.8rem; padding:0.45rem 1rem;">
+              <i class="fas fa-hand-holding-heart"></i> Respond Now
+            </a>
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center; padding:2.5rem; color:rgba(255,255,255,0.3);">
+          <i class="fas fa-check-circle" style="font-size:2.5rem; color:#4ade80; display:block; margin-bottom:0.75rem;"></i>
+          <p>No critical requests right now. Thank you, community!</p>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:1.25rem; display:flex; gap:0.75rem;">
+          <a href="{% url 'request_list' %}" class="btn-section btn-section-ghost">
+            <i class="fas fa-list"></i> All Requests
+          </a>
+          <a href="{% url 'create_request' %}" class="btn-section btn-section-primary">
+            <i class="fas fa-plus"></i> New Request
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     BLOOD TYPE GUIDE
+════════════════════════════════════════ -->
+<section class="compat-section">
+  <div class="container">
+    <div class="sh" data-aos="fade-up">
+      <div class="section-tag"><i class="fas fa-dna"></i> Compatibility</div>
+      <h2 class="sh-title">Blood Type Guide</h2>
+      <p class="sh-sub">Knowing compatibility speeds up matching and saves critical minutes.</p>
+    </div>
+
+    <div class="compat-grid" data-aos="fade-up" data-aos-delay="80">
+      {% with types="A+,A-,B+,B-,O+,O-,AB+,AB-" %}
+
+      <div class="compat-card">
+        <div class="compat-type" style="color:#ef5350;">A+</div>
+        <span class="compat-badge" style="background:rgba(239,68,68,0.1);color:#ef5350;border:1px solid rgba(239,68,68,0.2);">Common</span>
+        <div class="compat-detail">Gives to: A+, AB+<br>Receives: A+, A−, O+, O−</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#fb923c;">A-</div>
+        <span class="compat-badge" style="background:rgba(251,146,60,0.1);color:#fb923c;border:1px solid rgba(251,146,60,0.2);">Rare</span>
+        <div class="compat-detail">Gives to: A±, AB±<br>Receives: A−, O−</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#4ade80;">B+</div>
+        <span class="compat-badge" style="background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);">Common</span>
+        <div class="compat-detail">Gives to: B+, AB+<br>Receives: B+, B−, O+, O−</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#60a5fa;">B-</div>
+        <span class="compat-badge" style="background:rgba(96,165,250,0.1);color:#60a5fa;border:1px solid rgba(96,165,250,0.2);">Rare</span>
+        <div class="compat-detail">Gives to: B±, AB±<br>Receives: B−, O−</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#a78bfa;">O+</div>
+        <span class="compat-badge" style="background:rgba(167,139,250,0.1);color:#a78bfa;border:1px solid rgba(167,139,250,0.2);">Most Common</span>
+        <div class="compat-detail">Gives to: A+, B+, O+, AB+<br>Receives: O+, O−</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#fbbf24;">O-</div>
+        <span class="compat-badge" style="background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);">Universal Donor</span>
+        <div class="compat-detail">Gives to: ALL types<br>Receives: O− only</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#f472b6;">AB+</div>
+        <span class="compat-badge" style="background:rgba(244,114,182,0.1);color:#f472b6;border:1px solid rgba(244,114,182,0.2);">Univ. Recipient</span>
+        <div class="compat-detail">Gives to: AB+ only<br>Receives: ALL types</div>
+      </div>
+      <div class="compat-card">
+        <div class="compat-type" style="color:#2dd4bf;">AB-</div>
+        <span class="compat-badge" style="background:rgba(45,212,191,0.1);color:#2dd4bf;border:1px solid rgba(45,212,191,0.2);">Rarest</span>
+        <div class="compat-detail">Gives to: AB±<br>Receives: A−, B−, O−, AB−</div>
+      </div>
+      {% endwith %}
+    </div>
+
+    <div style="text-align:center; margin-top:2rem;" data-aos="fade-up">
+      <a href="{% url 'blood_type_education' %}" class="btn-section btn-section-ghost">
+        <i class="fas fa-book-medical"></i> Full Compatibility Guide
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     TESTIMONIALS
+════════════════════════════════════════ -->
+<section class="stories-section">
+  <div class="container">
+    <div class="sh" data-aos="fade-up">
+      <div class="section-tag"><i class="fas fa-quote-left"></i> Community</div>
+      <h2 class="sh-title">Stories That Inspire</h2>
+      <p class="sh-sub">Real stories from UAP community members whose lives were touched by blood donation.</p>
+    </div>
+
+    <div class="grid-3" style="margin-top:2.5rem;" data-aos="fade-up" data-aos-delay="80">
+      <div class="story-card">
+        <div class="story-stars">★★★★★</div>
+        <div class="story-quote">"I posted an emergency request for my mother at 2 AM and within 30 minutes a UAP student called me. This platform saved her life."</div>
+        <div class="story-author">
+          <div class="story-av">R</div>
+          <div>
+            <div class="story-name">Rafiq Ahmed</div>
+            <div class="story-role">Faculty, CSE Department</div>
+          </div>
+        </div>
+      </div>
+      <div class="story-card">
+        <div class="story-stars">★★★★★</div>
+        <div class="story-quote">"I've donated 8 times through BloodConnect. The achievement system keeps me motivated — knowing my blood helped someone is the greatest reward."</div>
+        <div class="story-author">
+          <div class="story-av">S</div>
+          <div>
+            <div class="story-name">Samira Hossain</div>
+            <div class="story-role">Student, BBA 3rd Year</div>
+          </div>
+        </div>
+      </div>
+      <div class="story-card">
+        <div class="story-stars">★★★★★</div>
+        <div class="story-quote">"The blood type matching made it so easy to find the right donor for my surgery. The UAP community stepped up in an incredible way."</div>
+        <div class="story-author">
+          <div class="story-av">K</div>
+          <div>
+            <div class="story-name">Karim Uddin</div>
+            <div class="story-role">Student, EEE 4th Year</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CTA
+════════════════════════════════════════ -->
+<section class="cta-section">
+  <div style="max-width:700px; margin:0 auto; position:relative; z-index:1;" data-aos="fade-up">
+    <div class="section-tag" style="margin-bottom:1.5rem; background:rgba(198,40,40,0.2); border-color:rgba(198,40,40,0.4); display:inline-flex;">
+      <i class="fas fa-heart"></i> Join Today
+    </div>
+    <div class="cta-title">
+      One Donation.<br><span class="cta-red">Three Lives Saved.</span>
+    </div>
+    <p style="color:rgba(255,255,255,0.5); font-size:1.05rem; line-height:1.8; margin-bottom:2.5rem;">
+      Join the UAP-BloodConnect community and become part of a network that saves lives every week.
+      Every single donation can help up to three people.
+    </p>
+    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+      <a href="{% url 'register' %}" class="btn-hero-primary">
+        <i class="fas fa-user-plus"></i> Create Account
+      </a>
+      <a href="{% url 'eligibility_checker' %}" class="btn-hero-ghost">
+        <i class="fas fa-clipboard-check"></i> Check Eligibility
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ──────────────────────────────────────────
+   THREE.JS HERO SCENE
+────────────────────────────────────────── */
+(function () {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas || window.innerWidth < 900) return;
+
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 100);
+  camera.position.set(0, 0, 7);
+
+  /* Lights */
+  scene.add(new THREE.AmbientLight(0x1a0000, 2));
+
+  const light1 = new THREE.PointLight(0xff3333, 6, 25);
+  light1.position.set(4, 3, 4);
+  scene.add(light1);
+
+  const light2 = new THREE.PointLight(0xff7700, 3, 18);
+  light2.position.set(-4, -2, 3);
+  scene.add(light2);
+
+  const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  rimLight.position.set(0, 8, -2);
+  scene.add(rimLight);
+
+  /* Blood drop (sphere scaled tall) */
+  const dropGeo = new THREE.SphereGeometry(1.6, 64, 64);
+  const dropMat = new THREE.MeshPhysicalMaterial({
+    color: 0xc62828,
+    emissive: 0x5a0000,
+    emissiveIntensity: 0.45,
+    metalness: 0.05,
+    roughness: 0.18,
+    transparent: true,
+    opacity: 0.93,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.1,
+  });
+  const drop = new THREE.Mesh(dropGeo, dropMat);
+  drop.scale.set(1, 1.25, 1);
+  drop.castShadow = true;
+  scene.add(drop);
+
+  /* Outer glow halo */
+  const haloGeo = new THREE.SphereGeometry(2.1, 32, 32);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0xc62828, side: THREE.BackSide,
+    transparent: true, opacity: 0.07,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  scene.add(new THREE.Mesh(haloGeo, haloMat));
+
+  /* Second, brighter inner glow */
+  const glow2Geo = new THREE.SphereGeometry(1.75, 32, 32);
+  const glow2Mat = new THREE.MeshBasicMaterial({
+    color: 0xff5555, side: THREE.BackSide,
+    transparent: true, opacity: 0.05,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  scene.add(new THREE.Mesh(glow2Geo, glow2Mat));
+
+  /* Specular highlight blob */
+  const hlGeo = new THREE.SphereGeometry(0.45, 32, 32);
+  const hlMat = new THREE.MeshBasicMaterial({
+    color: 0xffbbbb, transparent: true, opacity: 0.28,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const hl = new THREE.Mesh(hlGeo, hlMat);
+  hl.position.set(-0.55, 0.65, 1.1);
+  scene.add(hl);
+
+  /* Orbital rings */
+  const ringMat = (opacity) => new THREE.MeshBasicMaterial({
+    color: 0xc62828, transparent: true, opacity,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const rings = [];
+  [
+    { ri: 2.5,  tube: 0.018, rx: Math.PI / 2,  ry: 0,            op: 0.35 },
+    { ri: 2.8,  tube: 0.012, rx: Math.PI / 4,  ry: Math.PI / 5,  op: 0.22 },
+    { ri: 3.1,  tube: 0.008, rx: 0,             ry: Math.PI / 3,  op: 0.15 },
+    { ri: 2.15, tube: 0.025, rx: -Math.PI / 6, ry: Math.PI / 8,  op: 0.28 },
+  ].forEach(({ ri, tube, rx, ry, op }) => {
+    const m = new THREE.Mesh(
+      new THREE.TorusGeometry(ri, tube, 16, 120),
+      ringMat(op)
+    );
+    m.rotation.x = rx;
+    m.rotation.y = ry;
+    scene.add(m);
+    rings.push(m);
+  });
+
+  /* Orbiting particle swarm */
+  const PARTS = 300;
+  const pos = new Float32Array(PARTS * 3);
+  const vel = [];
+  for (let i = 0; i < PARTS; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 2.8 + Math.random() * 3.5;
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+    vel.push({ theta, phi, r, speed: (Math.random() - 0.5) * 0.003 + 0.001 });
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0xee3333, size: 0.055, transparent: true, opacity: 0.65,
+    sizeAttenuation: true, blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  /* Small floating blood-cell spheres */
+  const cellMat = new THREE.MeshPhongMaterial({
+    color: 0x8b0000, emissive: 0x330000, transparent: true, opacity: 0.75,
+  });
+  const cellPositions = [
+    [-3.5, 2,   -1], [3.2, -1.5, -2], [-2, -3, 0.5],
+    [3.8, 2.5,  -1], [-3, 0.5, 1.5],  [2, 3.5, -0.5],
+  ];
+  const cells = cellPositions.map(([x, y, z]) => {
+    const c = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), cellMat);
+    c.position.set(x, y, z);
+    scene.add(c);
+    return c;
+  });
+
+  /* Animation */
+  let t = 0;
+  let mouseX = 0, mouseY = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.008;
+
+    /* Drop float + rotate */
+    drop.rotation.y = t * 0.25;
+    drop.position.y = Math.sin(t * 0.9) * 0.18;
+
+    /* Light orbits */
+    light1.position.x = Math.cos(t * 0.7) * 5;
+    light1.position.z = Math.sin(t * 0.7) * 5;
+    light2.position.x = Math.cos(t * 0.5 + Math.PI) * 4;
+    light2.position.z = Math.sin(t * 0.5 + Math.PI) * 4;
+
+    /* Rings */
+    rings.forEach((r, i) => {
+      r.rotation.y += 0.003 + i * 0.001;
+      r.rotation.x += (i % 2 === 0 ? 0.001 : -0.0015);
+    });
+
+    /* Particle swarm */
+    for (let i = 0; i < PARTS; i++) {
+      vel[i].theta += vel[i].speed;
+      pos[i*3]   = vel[i].r * Math.sin(vel[i].phi) * Math.cos(vel[i].theta);
+      pos[i*3+1] = vel[i].r * Math.sin(vel[i].phi) * Math.sin(vel[i].theta);
+      pos[i*3+2] = vel[i].r * Math.cos(vel[i].phi);
+    }
+    pGeo.attributes.position.needsUpdate = true;
+
+    /* Floating cells */
+    cells.forEach((c, i) => {
+      c.position.y += Math.sin(t + i * 1.3) * 0.004;
+      c.rotation.z += 0.01;
+    });
+
+    /* Soft camera parallax following mouse */
+    camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.04;
+    camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.04;
+    camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  /* Mouse parallax */
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / window.innerWidth  - 0.5) * 1.5;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 1.5;
+  });
+
+  /* Resize */
+  window.addEventListener('resize', () => {
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    camera.aspect = W / H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  });
+})();
+
+/* ──────────────────────────────────────────
+   3D CARD TILT EFFECT
+────────────────────────────────────────── */
+document.querySelectorAll('.tilt-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const { left, top, width, height } = card.getBoundingClientRect();
+    const x = (e.clientX - left) / width  - 0.5;
+    const y = (e.clientY - top)  / height - 0.5;
+    card.style.transition = 'none';
+    card.style.transform = `perspective(700px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) translateZ(8px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform 0.6s cubic-bezier(0.23,1,0.32,1)';
+    card.style.transform = 'perspective(700px) rotateY(0deg) rotateX(0deg) translateZ(0)';
+  });
+});
+
+/* ──────────────────────────────────────────
+   COUNTER ANIMATIONS
+────────────────────────────────────────── */
+function animateCount(el, target) {
+  if (target === 0) { el.textContent = '0'; return; }
+  const dur = 1800;
+  const start = performance.now();
+  const suffix = el.innerHTML.includes('sfx') ? el.innerHTML.slice(el.innerHTML.indexOf('<span')) : '';
+  function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 4);
+    el.textContent = Math.round(ease * target);
+    if (suffix) el.innerHTML = Math.round(ease * target) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    animateCount(el, target);
+    io.unobserve(el);
+  });
+}, { threshold: 0.4 });
+
+document.querySelectorAll('[data-count]').forEach(el => io.observe(el));
+
+/* ──────────────────────────────────────────
+   BLOOD TUBE FILL ANIMATION
+────────────────────────────────────────── */
+const tubeIo = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    entry.target.querySelectorAll('.inv-tube-fill').forEach(fill => {
+      const pct = fill.getAttribute('data-pct') || '0';
+      setTimeout(() => { fill.style.height = pct + '%'; }, 200);
+    });
+    tubeIo.unobserve(entry.target);
+  });
+}, { threshold: 0.2 });
+
+const invSection = document.querySelector('.inv-tubes');
+if (invSection) tubeIo.observe(invSection);
+</script>
+{% endblock %}

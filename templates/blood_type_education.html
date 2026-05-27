@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Blood Type Guide — UAP-BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.edu-hero {
+    background: linear-gradient(135deg, #0F172A, #1a0a0a);
+    padding: 4rem 2rem;
+    text-align: center;
+    margin: -2rem -2rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+.edu-hero::before {
+    content:'';position:absolute;width:600px;height:600px;
+    background:radial-gradient(circle,rgba(198,40,40,0.15) 0%,transparent 70%);
+    top:-200px;left:50%;transform:translateX(-50%);
+}
+
+.blood-type-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 2px solid;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.blood-type-card::before {
+    content: attr(data-type);
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    font-family: 'Poppins',sans-serif;
+    font-size: 5rem;
+    font-weight: 900;
+    opacity: 0.05;
+    color: inherit;
+    line-height: 1;
+}
+.blood-type-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+}
+
+.bt-type {
+    font-family: 'Poppins',sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: 0.25rem;
+    line-height: 1;
+}
+.bt-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 1.25rem;
+}
+.bt-frequency-bar {
+    height: 6px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 3px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+.bt-frequency-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: currentColor;
+    opacity: 0.6;
+    transition: width 1.5s ease;
+}
+.bt-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.bt-row:last-of-type { border-bottom: none; }
+.bt-row-label { font-weight: 600; opacity: 0.7; }
+.bt-row-val { font-weight: 700; }
+.bt-facts { margin-top: 1rem; }
+.bt-fact {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.35rem;
+    opacity: 0.75;
+}
+.bt-fact i { flex-shrink:0;margin-top:0.15rem; }
+
+.fact-band {
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    color: white;
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    text-align: center;
+    margin: 3rem 0;
+    position: relative;
+    overflow: hidden;
+}
+.fact-band::before {
+    content:'';position:absolute;
+    width:400px;height:400px;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:50%;
+    top:-150px;right:-100px;
+}
+.fact-items { display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;margin-top:2rem;position:relative;z-index:1; }
+.fact-item { color:white; }
+.fact-num { font-family:'Poppins',sans-serif;font-size:2.5rem;font-weight:900;display:block;line-height:1; }
+.fact-label { font-size:0.82rem;opacity:0.7;margin-top:0.25rem; }
+
+@media (max-width:768px) {
+    .fact-items { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:480px) {
+    .fact-items { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edu-hero" data-aos="fade-down">
+    <div style="position:relative;z-index:1;">
+        <div class="section-tag" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white;margin-bottom:1rem;">
+            <i class="fas fa-dna"></i> Blood Type Guide
+        </div>
+        <h1 style="font-family:'Poppins',sans-serif;font-size:2.5rem;font-weight:900;color:white;margin-bottom:0.5rem;">
+            Complete Blood Type Education
+        </h1>
+        <p style="color:rgba(255,255,255,0.6);max-width:550px;margin:0 auto;">
+            Understanding blood types helps you know who you can save — and who can save you.
+        </p>
+    </div>
+</div>
+
+<!-- Blood Type Cards -->
+<div class="grid grid-4" style="gap:1.25rem;" data-aos="fade-up">
+    {% for bt in blood_types %}
+    <div class="blood-type-card" data-type="{{ bt.type }}" style="border-color:{{ bt.border }};background:{{ bt.bg }};color:{{ bt.color }};" data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}00">
+        <div class="bt-type">{{ bt.type }}</div>
+        <div class="bt-label">{{ bt.label }}</div>
+
+        <div class="bt-frequency-bar">
+            <div class="bt-frequency-fill" style="width:{{ bt.frequency }};"></div>
+        </div>
+        <div style="font-size:0.75rem;font-weight:700;opacity:0.6;margin-bottom:1rem;">~{{ bt.frequency }} of population</div>
+
+        <div class="bt-row">
+            <span class="bt-row-label">Can Give To</span>
+            <span class="bt-row-val">{{ bt.can_give_to }}</span>
+        </div>
+        <div class="bt-row">
+            <span class="bt-row-label">Can Receive</span>
+            <span class="bt-row-val">{{ bt.can_receive }}</span>
+        </div>
+
+        <div class="bt-facts">
+            {% for fact in bt.facts %}
+            <div class="bt-fact">
+                <i class="fas fa-circle-dot" style="font-size:0.55rem;margin-top:0.3rem;"></i>
+                {{ fact }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Key Facts Banner -->
+<div class="fact-band" data-aos="fade-up">
+    <h2 style="font-family:'Poppins',sans-serif;font-size:1.75rem;font-weight:800;color:white;position:relative;z-index:1;">
+        Global Blood Donation Facts
+    </h2>
+    <div class="fact-items">
+        <div class="fact-item">
+            <span class="fact-num">O-</span>
+            <div class="fact-label">Universal Donor — can give to all 8 blood types</div>
+        </div>
+        <div class="fact-item">
+            <span class="fact-num">AB+</span>
+            <div class="fact-label">Universal Recipient — can receive from all 8 types</div>
+        </div>
+        <div class="fact-item">
+            <span class="fact-num">3</span>
+            <div class="fact-label">Lives saved from every single blood donation</div>
+        </div>
+        <div class="fact-item">
+            <span class="fact-num">90</span>
+            <div class="fact-label">Days to wait between whole blood donations</div>
+        </div>
+    </div>
+</div>
+
+<!-- Compatibility Table -->
+<div class="card" data-aos="fade-up">
+    <h2 style="font-family:'Poppins',sans-serif;font-weight:800;color:var(--slate-900);margin-bottom:1.5rem;text-align:center;">
+        <i class="fas fa-table" style="color:var(--crimson);"></i> Full Compatibility Chart
+    </h2>
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.875rem;text-align:center;">
+            <thead>
+                <tr style="background:var(--slate-900);color:white;">
+                    <th style="padding:0.75rem 1rem;text-align:left;">Blood Type</th>
+                    <th style="padding:0.75rem 1rem;">O-</th>
+                    <th style="padding:0.75rem 1rem;">O+</th>
+                    <th style="padding:0.75rem 1rem;">A-</th>
+                    <th style="padding:0.75rem 1rem;">A+</th>
+                    <th style="padding:0.75rem 1rem;">B-</th>
+                    <th style="padding:0.75rem 1rem;">B+</th>
+                    <th style="padding:0.75rem 1rem;">AB-</th>
+                    <th style="padding:0.75rem 1rem;">AB+</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in compatibility_rows %}
+                <tr style="border-bottom:1px solid var(--slate-200);">
+                    <td style="padding:0.6rem 1rem;text-align:left;font-weight:700;color:var(--slate-800);">{{ row.type }}</td>
+                    {% for can in row.can_receive %}
+                    <td style="padding:0.6rem;background:{% if can %}#F0FDF4{% else %}#FEF2F2{% endif %};">
+                        {% if can %}
+                            <i class="fas fa-check" style="color:#16A34A;"></i>
+                        {% else %}
+                            <i class="fas fa-times" style="color:#DC2626;opacity:0.4;"></i>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="padding:2rem;text-align:center;color:var(--slate-400);">Loading compatibility data...</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="text-align:center;font-size:0.78rem;color:var(--slate-400);margin-top:1rem;">
+        <i class="fas fa-check" style="color:#16A34A;"></i> = Can receive &nbsp;&nbsp;&nbsp; <i class="fas fa-times" style="color:#DC2626;opacity:0.4;"></i> = Cannot receive
+    </p>
+</div>
+
+<!-- CTA -->
+<div style="text-align:center;padding:3rem 0;" data-aos="fade-up">
+    <h3 style="font-family:'Poppins',sans-serif;font-size:1.5rem;font-weight:800;color:var(--slate-900);margin-bottom:0.75rem;">
+        Ready to Save Lives?
+    </h3>
+    <p style="color:var(--slate-600);margin-bottom:1.5rem;">Now that you know about blood types, check if you're eligible and register as a donor.</p>
+    <a href="{% url 'eligibility_checker' %}" class="btn btn-ghost btn-lg" style="margin-right:1rem;">
+        <i class="fas fa-clipboard-check"></i> Check Eligibility
+    </a>
+    <a href="{% url 'donor_register' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-heart"></i> Become a Donor
+    </a>
+</div>
+{% endblock %}
