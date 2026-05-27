@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load blood_filters %}
+
+{% block title %}Donation Drives — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .drives-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #001a00 100%);
+    padding: 6rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .drives-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 50%, rgba(46,125,50,0.2) 0%, transparent 70%);
+  }
+  .drive-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .drive-card:hover {
+    border-color: rgba(46,125,50,0.4);
+    background: rgba(46,125,50,0.05);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+  .drive-card .status-banner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .status-upcoming .status-banner { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+  .status-active .status-banner { background: linear-gradient(90deg, #4ade80, #22c55e); }
+  .status-completed .status-banner { background: linear-gradient(90deg, #94a3b8, #64748b); }
+  .drive-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-upcoming { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .badge-active { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+  .badge-completed { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+  .badge-cancelled { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .drive-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin: 0.75rem 0;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+  }
+  .drive-meta span { display: flex; align-items: center; gap: 0.4rem; }
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 0.75rem;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+  .blood-chip {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin: 0.1rem;
+  }
+  .filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    color: rgba(255,255,255,0.6);
+    padding: 0.4rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: rgba(46,125,50,0.15);
+    border-color: #4ade80;
+    color: #4ade80;
+  }
+  .registered-badge {
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.25);
+    color: #4ade80;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="drives-hero">
+  <div class="container">
+    <div style="position:relative; z-index:1;">
+      <h1 style="font-size:2.2rem; font-weight:800; color:#fff; margin-bottom:0.5rem;" data-aos="fade-up">
+        <i class="fas fa-calendar-alt" style="color:#4ade80;"></i> Donation Drives
+      </h1>
+      <p style="color:rgba(255,255,255,0.5);" data-aos="fade-up" data-aos-delay="100">
+        Find upcoming blood donation events and register to participate.
+      </p>
+      {% if user.is_authenticated and user.is_club_president %}
+      <a href="{% url 'create_drive' %}" style="display:inline-flex;align-items:center;gap:0.5rem;margin-top:1rem;background:rgba(46,125,50,0.2);border:1px solid rgba(74,222,128,0.3);color:#4ade80;padding:0.6rem 1.2rem;border-radius:10px;font-weight:600;text-decoration:none;" data-aos="fade-up" data-aos-delay="150">
+        <i class="fas fa-plus-circle"></i> Create New Drive
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<section style="padding:3rem 0; background:var(--slate-900); min-height:60vh;">
+  <div class="container">
+
+    <div class="filter-bar">
+      <a href="{% url 'drive_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+      <a href="?status=upcoming" class="filter-btn {% if status_filter == 'upcoming' %}active{% endif %}">Upcoming</a>
+      <a href="?status=active" class="filter-btn {% if status_filter == 'active' %}active{% endif %}">Active</a>
+      <a href="?status=completed" class="filter-btn {% if status_filter == 'completed' %}active{% endif %}">Completed</a>
+    </div>
+
+    {% if drives %}
+      {% for drive in drives %}
+      <div class="drive-card status-{{ drive.status }}" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'0' }}0">
+        <div class="status-banner"></div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; padding-top:0.25rem;">
+          <div style="flex:1; min-width:200px;">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+              <h3 style="color:#fff; font-size:1.15rem; font-weight:700; margin:0;">{{ drive.title }}</h3>
+              <span class="drive-status-badge badge-{{ drive.status }}">
+                <i class="fas fa-circle" style="font-size:0.5rem;"></i>
+                {{ drive.get_status_display }}
+              </span>
+              {% if drive.id in registered_ids %}
+              <span class="registered-badge"><i class="fas fa-check"></i> Registered</span>
+              {% endif %}
+            </div>
+
+            {% if drive.description %}
+            <p style="color:rgba(255,255,255,0.5); font-size:0.88rem; margin:0 0 0.5rem;">
+              {{ drive.description|truncatewords:20 }}
+            </p>
+            {% endif %}
+
+            <div class="drive-meta">
+              <span><i class="fas fa-calendar"></i> {{ drive.date }}</span>
+              <span><i class="fas fa-clock"></i> {{ drive.start_time|time:"g:i A" }} – {{ drive.end_time|time:"g:i A" }}</span>
+              <span><i class="fas fa-map-marker-alt"></i> {{ drive.venue }}</span>
+              <span><i class="fas fa-tint"></i> Target: {{ drive.target_units }} units</span>
+              <span><i class="fas fa-users"></i> {{ drive.registrations_count }} registered</span>
+            </div>
+
+            {% if drive.target_blood_groups.all %}
+            <div style="margin-top:0.5rem;">
+              <small style="color:rgba(255,255,255,0.4); margin-right:0.4rem;">Needed:</small>
+              {% for bg in drive.target_blood_groups.all %}
+              <span class="blood-chip blood-{{ bg.blood_type|blood_css }}">{{ bg.blood_type }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if drive.partner_organization %}
+            <div style="margin-top:0.4rem; color:rgba(255,255,255,0.35); font-size:0.8rem;">
+              <i class="fas fa-handshake"></i> {{ drive.partner_organization }}
+            </div>
+            {% endif %}
+
+            {% if drive.target_units > 0 %}
+            {% widthratio drive.donations_collected drive.target_units 100 as pct %}
+            <div style="margin-top:0.75rem;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                <small style="color:rgba(255,255,255,0.4);">{{ drive.donations_collected }} of {{ drive.target_units }} units collected</small>
+                <small style="color:#4ade80; font-weight:600;">{{ pct }}%</small>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:{{ pct }}%;"></div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
+            <a href="{% url 'drive_detail' drive.id %}"
+               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);padding:0.5rem 1.1rem;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;transition:all 0.2s;">
+              <i class="fas fa-eye"></i> Details
+            </a>
+            {% if user.is_authenticated and drive.status in 'upcoming,active' and drive.id not in registered_ids %}
+            <form method="post" action="{% url 'register_for_drive' drive.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                      style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.35);color:#4ade80;padding:0.5rem 1.1rem;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                <i class="fas fa-hand-paper"></i> Register
+              </button>
+            </form>
+            {% endif %}
+            {% if user.is_authenticated and drive.id in registered_ids %}
+            <form method="post" action="{% url 'unregister_from_drive' drive.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                      style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;padding:0.5rem 1.1rem;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                <i class="fas fa-times"></i> Unregister
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div style="text-align:center; padding:4rem; color:rgba(255,255,255,0.3);">
+      <i class="fas fa-calendar-times" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
+      <p style="font-size:1.1rem;">No drives found{% if status_filter %} for "{{ status_filter }}"{% endif %}.</p>
+      {% if user.is_authenticated and user.is_club_president %}
+      <a href="{% url 'create_drive' %}" style="color:#4ade80; font-weight:600; margin-top:0.5rem; display:inline-block;">Create the first drive →</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

@@ -1,54 +1,152 @@
 {% extends 'base.html' %}
+{% block title %}Log Donation — UAP-BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+.log-wrap {
+    max-width: 660px;
+    margin: 0 auto;
+}
+.log-header {
+    background: linear-gradient(135deg,rgba(139,0,0,0.4),rgba(15,23,42,0.9));
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 1.75rem;
+    border: 1px solid rgba(198,40,40,0.2);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.log-header::before {
+    content:'';
+    position:absolute;
+    width:250px;height:250px;
+    background:radial-gradient(circle,rgba(198,40,40,0.18) 0%,transparent 70%);
+    top:-60px;left:50%;transform:translateX(-50%);
+    pointer-events:none;
+}
+.log-header-icon {
+    width:64px;height:64px;
+    background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.5rem;color:white;
+    margin:0 auto 1rem;
+    box-shadow:0 0 30px rgba(198,40,40,0.4);
+    position:relative;z-index:1;
+}
+.log-header h2 {
+    font-family:'Poppins',sans-serif;
+    font-weight:900;
+    color:white;
+    font-size:1.5rem;
+    margin-bottom:0.4rem;
+    position:relative;z-index:1;
+}
+.log-header p { color:rgba(255,255,255,0.5); font-size:0.9rem; position:relative;z-index:1; }
 
-{% block title %}Add Donation - UAP-BloodConnect{% endblock %}
+.log-form-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:2rem;
+    margin-bottom:1.5rem;
+}
 
+.guidelines-box {
+    background: rgba(198,40,40,0.08);
+    border: 1px solid rgba(198,40,40,0.25);
+    border-radius:14px;
+    padding:1.25rem 1.5rem;
+    margin:1.5rem 0;
+}
+.guidelines-box h4 {
+    font-family:'Poppins',sans-serif;
+    font-weight:700;
+    color:#FCA5A5;
+    margin-bottom:0.85rem;
+    display:flex;align-items:center;gap:0.5rem;
+}
+.guide-item {
+    display:flex;align-items:center;gap:0.6rem;
+    padding:0.35rem 0;
+    font-size:0.875rem;
+    color:rgba(255,255,255,0.65);
+    border-bottom:1px solid rgba(255,255,255,0.05);
+}
+.guide-item:last-child { border-bottom:none; }
+.guide-item i { color:#4ADE80; font-size:0.8rem; flex-shrink:0; }
+
+.form-actions { display:flex; gap:1rem; margin-top:1.75rem; }
+.form-actions .btn { flex:1; justify-content:center; }
+
+.field-error {
+    color:#FCA5A5;
+    font-size:0.8rem;
+    margin-top:0.3rem;
+    display:flex;align-items:center;gap:0.35rem;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto;">
-   <div class="card">
-       <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-red);">Add Donation Record</h2>
-       <p style="text-align: center; margin-bottom: 2rem; color: var(--gray-600);">Record your blood donation to track your life-saving contributions</p>
+<div class="log-wrap">
 
-       <form method="post" enctype="multipart/form-data">
-           {% csrf_token %}
+    <!-- Header -->
+    <div class="log-header" data-aos="fade-down">
+        <div class="log-header-icon">
+            <i class="fas fa-plus-circle"></i>
+        </div>
+        <h2>Log a Donation</h2>
+        <p>Record your blood donation to track your life-saving contributions</p>
+    </div>
 
-           {% for field in form %}
-           <div class="form-group">
-               <label class="form-label">{{ field.label }}</label>
-               {{ field }}
-               {% if field.help_text %}
-               <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
-                   {{ field.help_text }}
-               </div>
-               {% endif %}
-               {% if field.errors %}
-               <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.25rem;">
-                   {{ field.errors }}
-               </div>
-               {% endif %}
-           </div>
-           {% endfor %}
+    <!-- Form -->
+    <div class="log-form-card" data-aos="fade-up">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-           <div style="background: var(--light-red); padding: 1.5rem; border-radius: 0.5rem; margin: 2rem 0;">
-               <h4 style="color: var(--primary-red); margin-bottom: 1rem;">💡 Donation Guidelines</h4>
-               <ul style="list-style-type: none;">
-                   <li style="padding: 0.25rem 0;">✅ Wait 90 days between donations</li>
-                   <li style="padding: 0.25rem 0;">✅ Typical donation: 1 unit (450ml)</li>
-                   <li style="padding: 0.25rem 0;">✅ Bring your donation certificate if available</li>
-                   <li style="padding: 0.25rem 0;">✅ Record accurate donation date</li>
-               </ul>
-           </div>
+            {% for field in form %}
+            <div class="form-group">
+                <label class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span style="color:#FCA5A5;">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                <div style="font-size:0.8rem;color:rgba(255,255,255,0.35);margin-top:0.3rem;">
+                    <i class="fas fa-info-circle" style="margin-right:0.25rem;"></i>{{ field.help_text }}
+                </div>
+                {% endif %}
+                {% if field.errors %}
+                <div class="field-error">
+                    <i class="fas fa-exclamation-circle"></i>{{ field.errors.as_text }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
 
-           <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-               <button type="submit" class="btn btn-primary" style="flex: 1;">
-                   Add Donation Record
-               </button>
-               <a href="{% url 'donor_dashboard' %}" class="btn btn-outline" style="flex: 1; text-align: center;">
-                   Cancel
-               </a>
-           </div>
-       </form>
-   </div>
+            <!-- Guidelines -->
+            <div class="guidelines-box">
+                <h4><i class="fas fa-lightbulb"></i> Donation Guidelines</h4>
+                <div class="guide-item"><i class="fas fa-check-circle"></i> Wait at least 90 days between donations</div>
+                <div class="guide-item"><i class="fas fa-check-circle"></i> A typical donation is 1 unit (450 ml)</div>
+                <div class="guide-item"><i class="fas fa-check-circle"></i> Bring your donation certificate if available</div>
+                <div class="guide-item"><i class="fas fa-check-circle"></i> Record the accurate donation date</div>
+                <div class="guide-item"><i class="fas fa-check-circle"></i> Donation will be pending until verified by an advisor</div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Record
+                </button>
+                <a href="{% url 'donor_dashboard' %}" class="btn btn-outline-white">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
 </div>
 {% endblock %}

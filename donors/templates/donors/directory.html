@@ -1,109 +1,354 @@
 {% extends 'base.html' %}
+{% load blood_filters %}
+{% block title %}Find Donors — UAP-BloodConnect{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ─── Hero ─── */
+.dir-hero {
+    background: linear-gradient(135deg,rgba(15,23,42,0.9),rgba(26,10,10,0.85));
+    border: 1px solid rgba(198,40,40,0.2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+.dir-hero::before {
+    content:'';
+    position:absolute;
+    width:400px;height:400px;
+    background:radial-gradient(circle,rgba(198,40,40,0.15) 0%,transparent 65%);
+    top:-150px;right:-100px;pointer-events:none;
+}
 
-{% block title %}Find Donors - UAP-BloodConnect{% endblock %}
+/* ─── Donor Grid ─── */
+.donors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
 
+/* ─── Donor Card ─── */
+.d-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1.5rem;
+    transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    cursor: default;
+}
+.d-card::before {
+    content:'';
+    position:absolute;inset:0;
+    background: linear-gradient(135deg,rgba(198,40,40,0.08),transparent);
+    opacity:0;
+    transition: opacity 0.35s;
+    border-radius:18px;
+    pointer-events:none;
+}
+.d-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(198,40,40,0.35);
+    box-shadow: 0 20px 55px rgba(198,40,40,0.2);
+}
+.d-card:hover::before { opacity:1; }
+
+.d-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins',sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 1rem;
+    position: relative;
+    box-shadow: 0 0 25px rgba(198,40,40,0.35);
+    transition: transform 0.3s;
+}
+.d-card:hover .d-avatar { transform: scale(1.08) rotate(-5deg); }
+
+/* Available indicator ring */
+.d-avatar.available::after {
+    content:'';
+    position:absolute;
+    inset:-3px;
+    border-radius:50%;
+    border: 2px solid rgba(110,231,183,0.6);
+    animation: ringPulse 2s ease-in-out infinite;
+}
+@keyframes ringPulse {
+    0%,100% { transform:scale(1); opacity:1; }
+    50% { transform:scale(1.08); opacity:0.6; }
+}
+
+.d-name {
+    font-family:'Poppins',sans-serif;
+    font-weight:800;
+    font-size:0.95rem;
+    color:white;
+    margin-bottom:0.25rem;
+}
+.d-role { font-size:0.75rem; color:rgba(255,255,255,0.4); margin-bottom:0.85rem; }
+
+.d-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom:1rem;
+}
+.d-stat {
+    background: rgba(255,255,255,0.05);
+    border-radius:10px;
+    padding:0.6rem 0.75rem;
+    text-align:center;
+}
+.d-stat-n { font-family:'Poppins',sans-serif; font-size:1.1rem; font-weight:800; color:var(--crimson-light); }
+.d-stat-l { font-size:0.65rem; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.5px; }
+
+.d-footer {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:0.85rem;
+    border-top:1px solid rgba(255,255,255,0.07);
+    margin-top:0.5rem;
+}
+.avail-dot {
+    width:8px;height:8px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:0.35rem;
+}
+.avail-available .avail-dot { background:#4ADE80; box-shadow:0 0 8px rgba(74,222,128,0.5); }
+.avail-busy      .avail-dot { background:#FCD34D; box-shadow:0 0 8px rgba(252,211,77,0.4); }
+.avail-unavailable .avail-dot { background:rgba(255,255,255,0.3); }
+
+/* ─── Filter ─── */
+.dir-filter {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:1.5rem;
+    margin-bottom:2rem;
+}
+.dir-filter-row { display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap; }
+.blood-pills { display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem; }
+.blood-pill {
+    padding:0.3rem 0.7rem;
+    border-radius:100px;
+    font-size:0.75rem;
+    font-weight:700;
+    border:1.5px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.05);
+    color:rgba(255,255,255,0.65);
+    cursor:pointer;
+    text-decoration:none;
+    transition:all 0.2s;
+}
+.blood-pill:hover,.blood-pill.active {
+    background:rgba(198,40,40,0.2);
+    border-color:rgba(198,40,40,0.4);
+    color:#FCA5A5;
+    transform:translateY(-1px);
+}
+
+.emergency-badge {
+    display:inline-flex;align-items:center;gap:0.3rem;
+    background:rgba(198,40,40,0.2);
+    color:#FCA5A5;
+    border:1px solid rgba(198,40,40,0.3);
+    border-radius:100px;
+    padding:0.2rem 0.6rem;
+    font-size:0.7rem;
+    font-weight:700;
+    animation: badgePulse 2s infinite;
+}
+@keyframes badgePulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* Count badge */
+.result-count {
+    font-size:0.82rem;
+    color:rgba(255,255,255,0.4);
+    margin-bottom:1.5rem;
+    padding:0.5rem 1rem;
+    background:rgba(255,255,255,0.03);
+    border-radius:8px;
+    display:inline-block;
+}
+
+.empty-donors {
+    text-align:center;
+    padding:4rem 2rem;
+    background:rgba(255,255,255,0.03);
+    border:1px dashed rgba(255,255,255,0.1);
+    border-radius:20px;
+}
+
+@media(max-width:768px){
+    .dir-hero { padding:1.5rem; }
+    .donors-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="card">
-   <h1 style="color: var(--primary-red); margin-bottom: 2rem;">Find Blood Donors</h1>
 
-   <div class="filter-section">
-       <h3 style="color: var(--gray-600); margin-bottom: 1rem;">Filter Donors</h3>
-       <form method="get" class="filter-grid">
-           <div class="form-group">
-               <label class="form-label">Blood Group</label>
-               <select name="blood_group" class="form-control">
-                   <option value="">All Blood Groups</option>
-                   <option value="A+" {% if selected_blood_group == "A+" %}selected{% endif %}>A+</option>
-                   <option value="A-" {% if selected_blood_group == "A-" %}selected{% endif %}>A-</option>
-                   <option value="B+" {% if selected_blood_group == "B+" %}selected{% endif %}>B+</option>
-                   <option value="B-" {% if selected_blood_group == "B-" %}selected{% endif %}>B-</option>
-                   <option value="O+" {% if selected_blood_group == "O+" %}selected{% endif %}>O+</option>
-                   <option value="O-" {% if selected_blood_group == "O-" %}selected{% endif %}>O-</option>
-                   <option value="AB+" {% if selected_blood_group == "AB+" %}selected{% endif %}>AB+</option>
-                   <option value="AB-" {% if selected_blood_group == "AB-" %}selected{% endif %}>AB-</option>
-               </select>
-           </div>
-
-           <div class="form-group">
-               <label class="form-label">Location</label>
-               <select name="location" class="form-control">
-                   <option value="">All Locations</option>
-                   <option value="campus" {% if selected_location == "campus" %}selected{% endif %}>UAP Campus</option>
-                   <option value="uttara" {% if selected_location == "uttara" %}selected{% endif %}>Uttara</option>
-                   <option value="gulshan" {% if selected_location == "gulshan" %}selected{% endif %}>Gulshan</option>
-                   <option value="banani" {% if selected_location == "banani" %}selected{% endif %}>Banani</option>
-                   <option value="dhanmondi" {% if selected_location == "dhanmondi" %}selected{% endif %}>Dhanmondi</option>
-                   <option value="mirpur" {% if selected_location == "mirpur" %}selected{% endif %}>Mirpur</option>
-               </select>
-           </div>
-
-           <div class="form-group">
-               <button type="submit" class="btn btn-primary" style="width: 100%;">Apply Filters</button>
-           </div>
-       </form>
-   </div>
-
-
-   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-       {% for donor in donors %}
-       <div class="donor-card">
-           <div style="display: flex; align-items: center; margin-bottom: 1rem;">
-               <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--gray-200); display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
-                   <span style="font-size: 1.25rem;">👤</span>
-               </div>
-               <div>
-                   <h4 style="margin: 0; color: var(--primary-red);">{{ donor.user.username }}</h4>
-                   <p style="margin: 0; color: var(--gray-600); font-size: 0.875rem;">{{ donor.user.get_user_type_display }}</p>
-               </div>
-           </div>
-
-           <div style="margin-bottom: 1rem;">
-               {% if donor.blood_group.blood_type == "A+" %}
-                   <span class="blood-badge blood-a-plus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "A-" %}
-                   <span class="blood-badge blood-a-minus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "B+" %}
-                   <span class="blood-badge blood-b-plus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "B-" %}
-                   <span class="blood-badge blood-b-minus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "O+" %}
-                   <span class="blood-badge blood-o-plus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "O-" %}
-                   <span class="blood-badge blood-o-minus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "AB+" %}
-                   <span class="blood-badge blood-ab-plus">{{ donor.blood_group.blood_type }}</span>
-               {% elif donor.blood_group.blood_type == "AB-" %}
-                   <span class="blood-badge blood-ab-minus">{{ donor.blood_group.blood_type }}</span>
-               {% else %}
-                   <span class="blood-badge">{{ donor.blood_group.blood_type }}</span>
-               {% endif %}
-           </div>
-
-           <div style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 0.5rem;">
-               📍 {{ donor.get_location_display }}
-           </div>
-
-           <div style="color: var(--gray-600); font-size: 0.875rem; margin-bottom: 1rem;">
-               🩸 {{ donor.total_donations }} donations
-           </div>
-
-           <div style="display: flex; justify-content: space-between; align-items: center;">
-               <span style="color: {% if donor.availability_status == 'available' %}green{% elif donor.availability_status == 'busy' %}orange{% else %}red{% endif %}; font-size: 0.875rem;">
-                   {% if donor.availability_status == 'available' %}✅ Available{% elif donor.availability_status == 'busy' %}🟡 Busy{% else %}🔴 Unavailable{% endif %}
-               </span>
-               {% if donor.emergency_response %}
-               <span style="color: var(--primary-red); font-size: 0.75rem;">🚨 Emergency</span>
-               {% endif %}
-           </div>
-       </div>
-       {% empty %}
-       <div class="card" style="grid-column: 1 / -1; text-align: center;">
-           <h3 style="color: var(--gray-600);">No donors found</h3>
-           <p>Try adjusting your filters to find more donors.</p>
-       </div>
-       {% endfor %}
-   </div>
+<!-- Hero -->
+<div class="dir-hero" data-aos="fade-down">
+    <div style="position:relative;z-index:1;">
+        <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(198,40,40,0.15);border:1px solid rgba(198,40,40,0.3);border-radius:100px;padding:0.3rem 1rem;font-size:0.75rem;font-weight:700;color:#FCA5A5;letter-spacing:1px;text-transform:uppercase;margin-bottom:0.75rem;">
+            <i class="fas fa-users"></i> Donor Directory
+        </div>
+        <div style="font-family:'Poppins',sans-serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:900;color:white;margin-bottom:0.4rem;">
+            Find Blood Donors
+        </div>
+        <div style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Search UAP's community of life-saving donors</div>
+    </div>
+    <div style="position:relative;z-index:1;display:flex;gap:0.75rem;align-items:center;">
+        {% if donors %}
+        <div style="text-align:center;padding:0.75rem 1.25rem;background:rgba(255,255,255,0.07);border-radius:12px;border:1px solid rgba(255,255,255,0.1);">
+            <div style="font-family:'Poppins',sans-serif;font-size:1.5rem;font-weight:900;color:white;" data-count="{{ donors|length }}">0</div>
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">Donors</div>
+        </div>
+        {% endif %}
+        <a href="{% url 'donor_register' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Become a Donor
+        </a>
+    </div>
 </div>
+
+<!-- Filter -->
+<div class="dir-filter" data-aos="fade-up" data-aos-delay="50">
+    <div style="font-size:0.75rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:0.85rem;">
+        <i class="fas fa-filter" style="margin-right:0.4rem;"></i> Filter Donors
+    </div>
+    <!-- Blood type pills -->
+    <div class="blood-pills">
+        <a href="?{% if selected_location %}location={{ selected_location }}{% endif %}"
+           class="blood-pill {% if not selected_blood_group %}active{% endif %}">All Types</a>
+        <a href="?blood_group=A+{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'A+' %}active{% endif %}">A+</a>
+        <a href="?blood_group=A-{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'A-' %}active{% endif %}">A-</a>
+        <a href="?blood_group=B+{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'B+' %}active{% endif %}">B+</a>
+        <a href="?blood_group=B-{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'B-' %}active{% endif %}">B-</a>
+        <a href="?blood_group=O+{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'O+' %}active{% endif %}">O+</a>
+        <a href="?blood_group=O-{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'O-' %}active{% endif %}">O-</a>
+        <a href="?blood_group=AB+{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'AB+' %}active{% endif %}">AB+</a>
+        <a href="?blood_group=AB-{% if selected_location %}&location={{ selected_location }}{% endif %}" class="blood-pill {% if selected_blood_group == 'AB-' %}active{% endif %}">AB-</a>
+    </div>
+    <form method="get" class="dir-filter-row">
+        {% if selected_blood_group %}<input type="hidden" name="blood_group" value="{{ selected_blood_group }}">{% endif %}
+        <div style="flex:1;min-width:160px;">
+            <label class="form-label">Location</label>
+            <select name="location" class="form-control">
+                <option value="">All Locations</option>
+                <option value="campus"    {% if selected_location == "campus"    %}selected{% endif %}>UAP Campus</option>
+                <option value="uttara"    {% if selected_location == "uttara"    %}selected{% endif %}>Uttara</option>
+                <option value="gulshan"   {% if selected_location == "gulshan"   %}selected{% endif %}>Gulshan</option>
+                <option value="banani"    {% if selected_location == "banani"    %}selected{% endif %}>Banani</option>
+                <option value="dhanmondi" {% if selected_location == "dhanmondi" %}selected{% endif %}>Dhanmondi</option>
+                <option value="mirpur"    {% if selected_location == "mirpur"    %}selected{% endif %}>Mirpur</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+            {% if selected_blood_group or selected_location %}
+            <a href="{% url 'donor_directory' %}" class="btn btn-outline-white"><i class="fas fa-times"></i> Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{% if donors %}
+<div class="result-count" data-aos="fade-up">
+    <i class="fas fa-check-circle" style="color:var(--crimson-light);margin-right:0.4rem;"></i>
+    Showing <strong style="color:white;">{{ donors|length }}</strong> donor{{ donors|length|pluralize }}
+    {% if selected_blood_group %}with blood type <strong style="color:#FCA5A5;">{{ selected_blood_group }}</strong>{% endif %}
+    {% if selected_location %}in <strong style="color:white;">{{ selected_location|title }}</strong>{% endif %}
+</div>
+
+<div class="donors-grid">
+    {% for donor in donors %}
+    <div class="d-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:'0' }}0">
+        <!-- Avatar -->
+        <div class="d-avatar {% if donor.availability_status == 'available' %}available{% endif %}">
+            {{ donor.user.username|first|upper }}
+        </div>
+
+        <div class="d-name">{{ donor.user.get_full_name|default:donor.user.username }}</div>
+        <div class="d-role">
+            <i class="fas fa-id-card" style="color:rgba(198,40,40,0.5);margin-right:0.3rem;font-size:0.65rem;"></i>
+            {{ donor.user.uap_id|default:"UAP Member" }}
+            {% if donor.user.get_role_display %}
+            &middot; {{ donor.user.get_role_display }}
+            {% endif %}
+        </div>
+
+        <!-- Blood type badge -->
+        <div style="margin-bottom:0.85rem;">
+            <span class="blood-badge {{ donor.blood_group.blood_type|blood_css }}" style="font-size:0.85rem;padding:0.4rem 1rem;">
+                <i class="fas fa-tint" style="font-size:0.7rem;"></i>
+                {{ donor.blood_group.blood_type }}
+            </span>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="d-stats">
+            <div class="d-stat">
+                <div class="d-stat-n">{{ donor.total_donations }}</div>
+                <div class="d-stat-l">Donations</div>
+            </div>
+            <div class="d-stat">
+                <div class="d-stat-n">
+                    <i class="fas fa-map-marker-alt" style="font-size:0.85rem;color:var(--crimson-light);"></i>
+                </div>
+                <div class="d-stat-l">{{ donor.get_location_display }}</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="d-footer">
+            <span class="avail-{{ donor.availability_status }}" style="font-size:0.8rem;font-weight:600;display:flex;align-items:center;color:
+                {% if donor.availability_status == 'available' %}#4ADE80
+                {% elif donor.availability_status == 'busy' %}#FCD34D
+                {% else %}rgba(255,255,255,0.35){% endif %};">
+                <span class="avail-dot"></span>
+                {{ donor.availability_status|title }}
+            </span>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+                {% if donor.emergency_response %}
+                <span class="emergency-badge"><i class="fas fa-bolt"></i> Emergency</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-donors" data-aos="fade-up">
+    <div style="width:72px;height:72px;background:rgba(198,40,40,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;border:1px solid rgba(198,40,40,0.2);">
+        <i class="fas fa-user-slash" style="font-size:1.75rem;color:rgba(198,40,40,0.6);"></i>
+    </div>
+    <h3 style="color:rgba(255,255,255,0.8);font-family:'Poppins',sans-serif;font-weight:700;margin-bottom:0.5rem;">No donors found</h3>
+    <p style="color:rgba(255,255,255,0.4);margin-bottom:2rem;">Try adjusting filters or be the first donor for this blood type!</p>
+    <a href="{% url 'donor_register' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Register as Donor
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

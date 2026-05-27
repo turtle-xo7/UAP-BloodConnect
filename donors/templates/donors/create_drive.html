@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Donation Drive — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #001a00 100%);
+    padding: 6rem 0 3rem;
+  }
+  .form-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2.5rem;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label {
+    display: block;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+  .form-control {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-control:focus { border-color: rgba(74,222,128,0.5); }
+  .form-control option { background: #1e293b; }
+  textarea.form-control { resize: vertical; min-height: 80px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+  .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .checkbox-group label {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.7);
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .checkbox-group label:hover { border-color: rgba(74,222,128,0.3); color: #4ade80; }
+  .checkbox-group input[type=checkbox]:checked + span,
+  .checkbox-group label:has(input:checked) {
+    border-color: rgba(74,222,128,0.4);
+    background: rgba(74,222,128,0.1);
+    color: #4ade80;
+  }
+  .checkbox-group input { accent-color: #4ade80; }
+  .btn-submit {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 2.5rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 20px rgba(46,125,50,0.3);
+    transition: all 0.2s;
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(46,125,50,0.4); }
+  .errorlist { color: #f87171; font-size: 0.82rem; margin-top: 0.4rem; list-style: none; padding: 0; }
+  .note-box {
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-hero">
+  <div class="container">
+    <h1 style="font-size:2rem; font-weight:800; color:#fff; margin-bottom:0.5rem;">
+      <i class="fas fa-plus-circle" style="color:#4ade80;"></i> Create Donation Drive
+    </h1>
+    <p style="color:rgba(255,255,255,0.5);">Fill in the details below. Your drive will be submitted for Faculty Advisor approval.</p>
+  </div>
+</div>
+
+<section style="padding:3rem 0; background:var(--slate-900);">
+  <div class="container">
+    <div class="note-box">
+      <i class="fas fa-info-circle" style="color:#fbbf24; flex-shrink:0; margin-top:0.1rem;"></i>
+      <span>After submission, a Faculty Advisor will review and approve the drive before it becomes publicly visible. You'll see it in your President Dashboard in the meantime.</span>
+    </div>
+
+    <div class="form-card">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label>Drive Title *</label>
+          {{ form.title }}
+          {% if form.title.errors %}<ul class="errorlist">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Date *</label>
+            {{ form.date }}
+            {% if form.date.errors %}<ul class="errorlist">{% for e in form.date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="form-group">
+            <label>Target Units</label>
+            {{ form.target_units }}
+            {% if form.target_units.errors %}<ul class="errorlist">{% for e in form.target_units.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="form-group">
+            <label>Start Time *</label>
+            {{ form.start_time }}
+            {% if form.start_time.errors %}<ul class="errorlist">{% for e in form.start_time.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+          <div class="form-group">
+            <label>End Time *</label>
+            {{ form.end_time }}
+            {% if form.end_time.errors %}<ul class="errorlist">{% for e in form.end_time.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Venue *</label>
+          {{ form.venue }}
+          {% if form.venue.errors %}<ul class="errorlist">{% for e in form.venue.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label>Partner Organization</label>
+          {{ form.partner_organization }}
+          {% if form.partner_organization.errors %}<ul class="errorlist">{% for e in form.partner_organization.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label>Target Blood Groups (optional — leave blank for all)</label>
+          <div class="checkbox-group">
+            {% for choice in form.target_blood_groups %}
+            <label>
+              {{ choice.tag }} <span>{{ choice.choice_label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% if form.target_blood_groups.errors %}<ul class="errorlist">{% for e in form.target_blood_groups.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:0.5rem;">
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-paper-plane"></i> Submit Drive
+          </button>
+          <a href="{% url 'drive_list' %}" style="color:rgba(255,255,255,0.4); font-size:0.88rem; text-decoration:none;">
+            <i class="fas fa-times"></i> Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

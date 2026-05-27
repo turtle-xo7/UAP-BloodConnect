@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load blood_filters %}
+
+{% block title %}{{ drive.title }} — BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .drive-hero {
+    background: linear-gradient(135deg, var(--slate-900) 0%, #001a00 100%);
+    padding: 6rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .drive-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 50%, rgba(46,125,50,0.2) 0%, transparent 70%);
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1.75rem;
+  }
+  .info-card h3 {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.9rem;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .label { color: rgba(255,255,255,0.4); }
+  .info-row .value { color: #fff; font-weight: 500; }
+  .attendance-table { width: 100%; border-collapse: collapse; }
+  .attendance-table th {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+  .attendance-table td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.88rem;
+  }
+  .attendance-table tr:last-child td { border-bottom: none; }
+  .donated-yes { color: #4ade80; font-weight: 700; }
+  .donated-no { color: rgba(255,255,255,0.3); }
+  .progress-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    border-radius: 8px;
+    transition: width 1s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="drive-hero">
+  <div class="container">
+    <div style="position:relative; z-index:1;">
+      <a href="{% url 'drive_list' %}" style="color:rgba(255,255,255,0.4); font-size:0.85rem; text-decoration:none; margin-bottom:1rem; display:inline-flex; align-items:center; gap:0.4rem;">
+        <i class="fas fa-arrow-left"></i> All Drives
+      </a>
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+        <h1 style="font-size:2rem; font-weight:800; color:#fff; margin:0;">{{ drive.title }}</h1>
+        <span style="background:rgba(46,125,50,0.15);border:1px solid rgba(74,222,128,0.3);color:#4ade80;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:700;text-transform:uppercase;">
+          {{ drive.get_status_display }}
+        </span>
+        {% if not drive.is_approved %}
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.8rem;font-weight:700;">
+          <i class="fas fa-clock"></i> Pending Approval
+        </span>
+        {% endif %}
+      </div>
+      {% if drive.description %}
+      <p style="color:rgba(255,255,255,0.5); margin-top:0.75rem; max-width:600px;">{{ drive.description }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<section style="padding:3rem 0; background:var(--slate-900); min-height:60vh;">
+  <div class="container">
+
+    <div class="info-grid">
+      <!-- Drive Info -->
+      <div>
+        <div class="info-card" style="margin-bottom:1.5rem;">
+          <h3><i class="fas fa-info-circle" style="color:#4ade80;"></i> Drive Details</h3>
+          <div class="info-row">
+            <span class="label"><i class="fas fa-calendar"></i> Date</span>
+            <span class="value">{{ drive.date }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label"><i class="fas fa-clock"></i> Time</span>
+            <span class="value">{{ drive.start_time|time:"g:i A" }} – {{ drive.end_time|time:"g:i A" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label"><i class="fas fa-map-marker-alt"></i> Venue</span>
+            <span class="value">{{ drive.venue }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label"><i class="fas fa-tint"></i> Target</span>
+            <span class="value">{{ drive.target_units }} units</span>
+          </div>
+          {% if drive.partner_organization %}
+          <div class="info-row">
+            <span class="label"><i class="fas fa-handshake"></i> Partner</span>
+            <span class="value">{{ drive.partner_organization }}</span>
+          </div>
+          {% endif %}
+          <div class="info-row">
+            <span class="label"><i class="fas fa-user"></i> Organizer</span>
+            <span class="value">{{ drive.created_by.username }}</span>
+          </div>
+          {% if drive.approved_by %}
+          <div class="info-row">
+            <span class="label"><i class="fas fa-shield-alt"></i> Approved by</span>
+            <span class="value">{{ drive.approved_by.username }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if drive.target_blood_groups.all %}
+        <div class="info-card" style="margin-bottom:1.5rem;">
+          <h3><i class="fas fa-tint" style="color:var(--crimson);"></i> Needed Blood Groups</h3>
+          <div style="display:flex; flex-wrap:wrap; gap:0.5rem; padding-top:0.5rem;">
+            {% for bg in drive.target_blood_groups.all %}
+            <span class="blood-badge blood-{{ bg.blood_type|blood_css }}" style="font-size:0.95rem; padding:0.4rem 0.9rem;">
+              {{ bg.blood_type }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Progress -->
+        <div class="info-card">
+          <h3><i class="fas fa-chart-bar" style="color:#4ade80;"></i> Progress</h3>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+            <span style="color:rgba(255,255,255,0.5); font-size:0.88rem;">{{ drive.registrations_count }} registered</span>
+            <span style="color:#4ade80; font-weight:700; font-size:0.88rem;">{{ drive.donations_collected }} donated</span>
+          </div>
+          {% if drive.target_units > 0 %}
+          {% widthratio drive.donations_collected drive.target_units 100 as pct %}
+          <div class="progress-wrap">
+            <div class="progress-fill" style="width:{{ pct }}%;"></div>
+          </div>
+          <div style="text-align:right; margin-top:0.35rem;">
+            <small style="color:rgba(255,255,255,0.4);">{{ pct }}% of {{ drive.target_units }} unit target</small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Registration / Action -->
+      <div>
+        {% if drive.is_approved and drive.status in 'upcoming,active' %}
+        <div class="info-card" style="margin-bottom:1.5rem; border-color:rgba(74,222,128,0.2);">
+          <h3><i class="fas fa-hand-paper" style="color:#4ade80;"></i> Register to Donate</h3>
+          {% if user.is_authenticated %}
+            {% if is_registered %}
+            <p style="color:#4ade80; font-weight:600; margin-bottom:1rem;">
+              <i class="fas fa-check-circle"></i> You are registered for this drive!
+            </p>
+            <form method="post" action="{% url 'unregister_from_drive' drive.id %}">
+              {% csrf_token %}
+              <button type="submit" style="width:100%;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;padding:0.7rem;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.9rem;">
+                <i class="fas fa-times"></i> Cancel Registration
+              </button>
+            </form>
+            {% else %}
+            <p style="color:rgba(255,255,255,0.5); font-size:0.88rem; margin-bottom:1.25rem;">
+              Sign up to participate in this donation drive. Show up on the day and help save lives!
+            </p>
+            <form method="post" action="{% url 'register_for_drive' drive.id %}">
+              {% csrf_token %}
+              <button type="submit" style="width:100%;background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;border:none;padding:0.85rem;border-radius:12px;font-weight:700;cursor:pointer;font-size:1rem;letter-spacing:0.02em;box-shadow:0 4px 20px rgba(46,125,50,0.3);">
+                <i class="fas fa-hand-paper"></i> Register Now
+              </button>
+            </form>
+            {% endif %}
+          {% else %}
+          <p style="color:rgba(255,255,255,0.5); font-size:0.88rem; margin-bottom:1rem;">
+            Please log in to register for this drive.
+          </p>
+          <a href="{% url 'login' %}" style="display:block;width:100%;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);color:#4ade80;padding:0.75rem;border-radius:10px;font-weight:600;text-align:center;text-decoration:none;">
+            Login to Register
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Attendance list (coordinators / management) -->
+        {% if user.is_authenticated and user.is_management %}
+        <div class="info-card">
+          <h3><i class="fas fa-clipboard-list" style="color:#60a5fa;"></i> Registered Donors</h3>
+          {% if registrations %}
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th>Donor</th>
+                <th>Blood</th>
+                <th>Donated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for reg in registrations %}
+              <tr>
+                <td>{{ reg.donor.user.username }}</td>
+                <td>
+                  <span class="blood-badge blood-{{ reg.donor.blood_group.blood_type|blood_css }}" style="font-size:0.75rem;">
+                    {{ reg.donor.blood_group.blood_type }}
+                  </span>
+                </td>
+                <td>
+                  {% if reg.donated %}
+                  <span class="donated-yes"><i class="fas fa-check"></i> Yes</span>
+                  {% else %}
+                  <span class="donated-no">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if not reg.donated %}
+                  <form method="post" action="{% url 'mark_attendance' drive.id reg.id %}">
+                    {% csrf_token %}
+                    <button type="submit" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);color:#4ade80;padding:0.25rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;">
+                      Mark Donated
+                    </button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p style="color:rgba(255,255,255,0.3); text-align:center; padding:1.5rem 0;">No registrations yet.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

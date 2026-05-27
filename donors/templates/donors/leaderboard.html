@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load blood_filters %}
+{% block title %}Donor Leaderboard — UAP-BloodConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-hero {
+    background: linear-gradient(135deg, #0F172A, #1a0a0a);
+    padding: 4rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin: -2rem -2rem 3rem;
+}
+.page-hero::before {
+    content:'';
+    position:absolute;
+    width:500px;height:500px;
+    background:radial-gradient(circle,rgba(198,40,40,0.15) 0%,transparent 70%);
+    top:-100px;left:50%;transform:translateX(-50%);
+}
+.page-hero-title { font-family:'Poppins',sans-serif;font-size:2.5rem;font-weight:900;color:white;margin-bottom:0.5rem; }
+.page-hero-sub { color:rgba(255,255,255,0.6);font-size:1rem;max-width:500px;margin:0 auto; }
+
+.podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0 3rem;
+}
+
+.podium-item {
+    text-align: center;
+    flex: 1;
+    max-width: 180px;
+}
+
+.podium-avatar {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--crimson), var(--crimson-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: 'Poppins',sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0 auto 0.75rem;
+    border: 4px solid;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+.podium-avatar:hover { transform: scale(1.1); }
+
+.podium-item.rank-1 .podium-avatar { width:90px;height:90px;font-size:2rem;border-color:#FFD700;box-shadow:0 0 30px rgba(255,215,0,0.4); }
+.podium-item.rank-2 .podium-avatar { border-color:#C0C0C0;box-shadow:0 0 20px rgba(192,192,192,0.3); }
+.podium-item.rank-3 .podium-avatar { border-color:#CD7F32;box-shadow:0 0 20px rgba(205,127,50,0.3); }
+
+.podium-base {
+    border-radius: 12px 12px 0 0;
+    padding: 1rem;
+    color: white;
+    font-weight: 700;
+}
+.podium-item.rank-1 .podium-base { background:linear-gradient(135deg,#B8960C,#FFD700);height:100px;color:#1a1a00; }
+.podium-item.rank-2 .podium-base { background:linear-gradient(135deg,#808080,#C0C0C0);height:75px;color:#1a1a1a; }
+.podium-item.rank-3 .podium-base { background:linear-gradient(135deg,#8B6914,#CD7F32);height:60px; }
+
+.podium-name { font-weight:700;font-size:0.9rem;margin-bottom:0.25rem;color:var(--slate-800); }
+.podium-count { font-family:'Poppins',sans-serif;font-size:1.1rem;font-weight:900;color:var(--crimson); }
+.podium-label { font-size:0.7rem;color:var(--slate-500); }
+
+.lb-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+
+.lb-row {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s ease;
+}
+.lb-row:hover { transform: translateX(6px); box-shadow: 0 6px 25px rgba(198,40,40,0.2); border-color: rgba(198,40,40,0.3); }
+.lb-row.highlighted { border: 2px solid rgba(198,40,40,0.5); background: rgba(198,40,40,0.1); }
+
+.lb-row td { padding: 1rem 1.25rem; vertical-align: middle; }
+.lb-row td:first-child { border-radius: 12px 0 0 12px; }
+.lb-row td:last-child { border-radius: 0 12px 12px 0; }
+
+.lb-rank-cell { font-family:'Poppins',sans-serif;font-weight:900;font-size:1.2rem;width:60px;text-align:center; }
+.lb-avatar { width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--crimson),var(--crimson-dark));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;box-shadow:0 0 15px rgba(198,40,40,0.3); }
+.lb-name { font-weight:700;color:rgba(255,255,255,0.9); }
+.lb-meta { font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:0.15rem; }
+.lb-count { font-family:'Poppins',sans-serif;font-size:1.4rem;font-weight:900;color:var(--crimson-light); }
+.lb-row td { color:rgba(255,255,255,0.75); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero" data-aos="fade-down">
+    <div style="position:relative;z-index:1;">
+        <div class="section-tag" style="background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.3);color:#FFD700;margin-bottom:1rem;">
+            <i class="fas fa-trophy"></i> Leaderboard
+        </div>
+        <div class="page-hero-title">Community Blood Heroes</div>
+        <div class="page-hero-sub">Celebrating UAP's most dedicated donors. Every donation is a gift of life.</div>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-section" data-aos="fade-up">
+    <form method="GET" style="display:flex;gap:1rem;align-items:end;flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;flex:1;min-width:150px;">
+            <label class="form-label">Filter by Blood Type</label>
+            <select name="blood_group" class="form-control" onchange="this.form.submit()">
+                <option value="">All Blood Types</option>
+                {% for bg in blood_groups %}
+                    <option value="{{ bg.blood_type }}" {% if selected_blood_group == bg.blood_type %}selected{% endif %}>
+                        {{ bg.blood_type }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if selected_blood_group %}
+        <a href="{% url 'leaderboard' %}" class="btn btn-ghost">Clear Filter</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if top_donors %}
+
+<!-- Podium (top 3) -->
+{% if top_donors|length >= 3 %}
+<div data-aos="fade-up" data-aos-delay="100">
+    <div class="podium">
+        <!-- 2nd -->
+        <div class="podium-item rank-2">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">🥈</div>
+            <div class="podium-avatar">{{ top_donors.1.user.username|first|upper }}</div>
+            <div class="podium-name">{{ top_donors.1.user.get_full_name|default:top_donors.1.user.username }}</div>
+            <div class="podium-count">{{ top_donors.1.total_donations }}</div>
+            <div class="podium-label">donations</div>
+            <div class="podium-base"><span class="blood-badge {{ top_donors.1.blood_group.blood_type|blood_css }}">{{ top_donors.1.blood_group.blood_type }}</span></div>
+        </div>
+        <!-- 1st -->
+        <div class="podium-item rank-1">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">&#x1F451;</div>
+            <div class="podium-avatar">{{ top_donors.0.user.username|first|upper }}</div>
+            <div class="podium-name" style="font-size:1rem;font-weight:800;">{{ top_donors.0.user.get_full_name|default:top_donors.0.user.username }}</div>
+            <div class="podium-count" style="font-size:1.5rem;">{{ top_donors.0.total_donations }}</div>
+            <div class="podium-label">donations</div>
+            <div class="podium-base"><span class="blood-badge {{ top_donors.0.blood_group.blood_type|blood_css }}">{{ top_donors.0.blood_group.blood_type }}</span></div>
+        </div>
+        <!-- 3rd -->
+        <div class="podium-item rank-3">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem;">&#x1F949;</div>
+            <div class="podium-avatar">{{ top_donors.2.user.username|first|upper }}</div>
+            <div class="podium-name">{{ top_donors.2.user.get_full_name|default:top_donors.2.user.username }}</div>
+            <div class="podium-count">{{ top_donors.2.total_donations }}</div>
+            <div class="podium-label">donations</div>
+            <div class="podium-base"><span class="blood-badge {{ top_donors.2.blood_group.blood_type|blood_css }}">{{ top_donors.2.blood_group.blood_type }}</span></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Full Table -->
+<div class="card" data-aos="fade-up" data-aos-delay="200">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="font-family:'Poppins',sans-serif;font-weight:800;color:white;">
+            <i class="fas fa-list-ol" style="color:var(--crimson-light);"></i> Full Rankings
+        </h2>
+        <span style="font-size:0.85rem;color:rgba(255,255,255,0.4);">{{ top_donors|length }} donors ranked</span>
+    </div>
+
+    <table class="lb-table">
+        <thead>
+            <tr>
+                <th style="padding:0.5rem 1.25rem;text-align:center;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;">Rank</th>
+                <th style="padding:0.5rem 1.25rem;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;">Donor</th>
+                <th style="padding:0.5rem 1.25rem;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;">Blood Type</th>
+                <th style="padding:0.5rem 1.25rem;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;">Location</th>
+                <th style="padding:0.5rem 1.25rem;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;text-align:center;">Donations</th>
+                <th style="padding:0.5rem 1.25rem;font-size:0.78rem;color:var(--slate-500);letter-spacing:0.5px;text-transform:uppercase;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for donor in top_donors %}
+            <tr class="lb-row {% if user.is_authenticated and donor.user == user %}highlighted{% endif %}">
+                <td class="lb-rank-cell">
+                    {% if forloop.counter == 1 %}🥇
+                    {% elif forloop.counter == 2 %}🥈
+                    {% elif forloop.counter == 3 %}🥉
+                    {% else %}<span style="color:var(--slate-400);">#{{ forloop.counter }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="lb-avatar">{{ donor.user.username|first|upper }}</div>
+                        <div>
+                            <div class="lb-name">
+                                {{ donor.user.get_full_name|default:donor.user.username }}
+                                {% if user.is_authenticated and donor.user == user %}
+                                    <span style="font-size:0.72rem;background:var(--crimson);color:white;padding:0.15rem 0.5rem;border-radius:100px;margin-left:0.4rem;">You</span>
+                                {% endif %}
+                            </div>
+                            <div class="lb-meta">{{ donor.user.uap_id|default:"UAP Member" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="blood-badge {{ donor.blood_group.blood_type|blood_css }}">{{ donor.blood_group.blood_type }}</span></td>
+                <td style="color:var(--slate-600);font-size:0.875rem;"><i class="fas fa-map-marker-alt" style="color:var(--crimson);margin-right:0.3rem;"></i>{{ donor.get_location_display }}</td>
+                <td style="text-align:center;">
+                    <div class="lb-count">{{ donor.total_donations }}</div>
+                    <div style="font-size:0.68rem;color:var(--slate-400);">donations</div>
+                </td>
+                <td>
+                    {% if donor.availability_status == 'available' %}
+                        <span class="badge" style="background:#F0FDF4;color:#166534;"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Available</span>
+                    {% elif donor.availability_status == 'busy' %}
+                        <span class="badge" style="background:#FFFBEB;color:#92400E;"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Busy</span>
+                    {% else %}
+                        <span class="badge" style="background:#F1F5F9;color:#475569;"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Unavailable</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="card" style="text-align:center;padding:4rem 2rem;">
+    <i class="fas fa-trophy" style="font-size:3rem;color:var(--slate-300);margin-bottom:1rem;display:block;"></i>
+    <h3 style="color:var(--slate-600);margin-bottom:0.5rem;">No donors on the leaderboard yet</h3>
+    <p style="color:var(--slate-400);margin-bottom:2rem;">Be the first to donate and claim the top spot!</p>
+    <a href="{% url 'donor_register' %}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Register as Donor
+    </a>
+</div>
+{% endif %}
+
+<div style="text-align:center;margin-top:2rem;" data-aos="fade-up">
+    <a href="{% url 'donor_register' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-heart"></i> Become a Donor
+    </a>
+    <a href="{% url 'donor_directory' %}" class="btn btn-ghost btn-lg" style="margin-left:1rem;">
+        <i class="fas fa-search"></i> Find Donors
+    </a>
+</div>
+{% endblock %}
